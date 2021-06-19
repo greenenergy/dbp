@@ -2,7 +2,6 @@ package patcher
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -45,7 +44,6 @@ func (p *Patcher) String() string {
 func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 	// Need to add the scanning & interpretation code here.
 
-	//fmt.Println("finding:", thePath)
 	file, err := os.Open(thePath)
 	if err != nil {
 		return nil, err
@@ -91,8 +89,10 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 	}
 	newp.body = data
 
-	dummy, _ := json.MarshalIndent(newp, "", "    ")
-	fmt.Println(string(dummy))
+	//dummy, _ := json.MarshalIndent(newp, "", "    ")
+	//fmt.Println(string(dummy))
+
+	p.patches[newp.Id] = &newp
 
 	return &newp, nil
 }
