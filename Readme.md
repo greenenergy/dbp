@@ -51,6 +51,8 @@ Each patch file will have a few specific and important fields in the top portion
  * tags (list of words that 'tag' the file. Can be used in search functions)
  * created (creation timestamp)
 
- This is enough for now. The magic is in the prereq line. This allows patches to reference each other by ID. This way the filenames don't matter, so you don't have to worry about someone else already using your filename. In fact, the filenames matter so little, I could even add a function into the migrate command that would move a given patch into the correct folder and rename it, probably based on the ID.
+ This is enough for now. The magic is in the prereq line. This allows patches to reference each other by ID. This way the filenames don't matter, so you don't have to worry about someone else already using your filename.
+
+So here's the expected workflow:
 
 

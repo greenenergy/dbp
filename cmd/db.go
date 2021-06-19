@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/greenenergy/migrate/pkg/patcher"
 	"github.com/spf13/cobra"
 )
@@ -24,18 +26,20 @@ import (
 // dbCmd represents the db command
 var dbCmd = &cobra.Command{
 	Use:   "db",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "apply patches to a database",
+	Long: `This function will collect all the patch files under a given folder,
+order them according to prerequisites and apply them to an indicated database.
+The filenames are not used by the patching system, or the directory tree, so you
+are free to use them however you wish to organize your data.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := cmd.Flags().Lookup("folder").Value.String()
 
 		p := patcher.NewPatcher()
-		p.Scan(folder)
+		err := p.Scan(folder)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+		p.Process()
 	},
 }
 
