@@ -18,6 +18,11 @@ package main
 
 import "github.com/greenenergy/migrate/cmd"
 
+var (
+	Version string
+)
+
 func main() {
+	cmd.Version = Version
 	cmd.Execute()
 }

@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -51,15 +52,11 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.migrate.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringP("host", "", "", "host the db runs on")
+	rootCmd.PersistentFlags().StringP("port", "", "", "port the db runs on")
+	rootCmd.PersistentFlags().StringP("dbname", "n", "", "database name")
+	rootCmd.PersistentFlags().BoolP("dry", "", false, "dry run")
+	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable debug log")
 }
 
 // initConfig reads in config file and ENV variables if set.

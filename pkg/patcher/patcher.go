@@ -3,6 +3,7 @@ package patcher
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -21,6 +22,7 @@ type Patch struct {
 	Patch       string
 	Author      string
 	Description string
+	Tags        []string
 	Prereqs     []string
 	body        []byte
 	Weight      int
@@ -99,6 +101,8 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 			newp.Author = val
 		case "prereqs":
 			newp.Prereqs = strings.Split(val, ",")
+		case "tags":
+			newp.Tags = strings.Split(val, ",")
 		case "description":
 			newp.Description = val
 		}
@@ -131,7 +135,15 @@ func (p *Patcher) Resolve() error {
 	for _, patch := range p.patches {
 		patches = append(patches, patch)
 		for _, pre := range patch.Prereqs {
-			p.bumpWeight(p.patches[pre])
+			if other, ok := p.patches[pre]; !ok {
+				// TODO: It's possible to reference a patch that has already been applied. So if the patch is not found
+				// in the list of files, we should check the database to see if that ID already exists in the 'applied_patches' table,
+				// and if it does, then let this trhough. Possibly create a mock entry so the rest of the code works as expected,
+				// and we can flag this as "applied patch found, though no file exists for it" for forensic examination.
+				return fmt.Errorf("bad ID reference. File %q refers to id %q which doesn't exist", patch.Filename, pre)
+			} else {
+				p.bumpWeight(other)
+			}
 		}
 	}
 
@@ -165,12 +177,10 @@ func (p *Patcher) Scan(folder string) error {
 		return err
 	}
 	if p.initPatch == nil {
-		fmt.Println("******** No init found! ********")
+		return errors.New("no init found. There must be at least one file in the patch tree named 'init_patch.sql'")
 	} else {
-		fmt.Println("Here's the patch config:")
-		p.Resolve()
+		return p.Resolve()
 	}
-	return nil
 }
 
 func (p *Patcher) Process() error {
