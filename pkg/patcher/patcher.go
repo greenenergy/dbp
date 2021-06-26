@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/google/uuid"
+	"github.com/spf13/pflag"
 )
 
 type Patch struct {
@@ -47,10 +47,13 @@ type Patcher struct {
 	initPatch *Patch
 	patches   map[string]*Patch
 	ordered   []*Patch
+	dry       bool
 }
 
-func NewPatcher() *Patcher {
+func NewPatcher(flags *pflag.FlagSet) *Patcher {
+
 	return &Patcher{
+		dry:     flags.Lookup("dry").Value.String() == "true",
 		patches: make(map[string]*Patch),
 	}
 }
@@ -75,7 +78,7 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 	scanner := bufio.NewScanner(file)
 
 	newp := Patch{
-		Id:       uuid.New().String(),
+		//Id:       uuid.New().String(),
 		Filename: thePath,
 	}
 
@@ -106,6 +109,12 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 		case "description":
 			newp.Description = val
 		}
+	}
+	//fmt.Printf("file: %q, id: %q\n", thePath, newp.Id)
+	if newp.Id == "" {
+		// The ID field is an absolute must. Without it, there is
+		// no linking.
+		return nil, fmt.Errorf("file %q missing ID field", thePath)
 	}
 
 	data, err := ioutil.ReadFile(thePath)
@@ -153,6 +162,9 @@ func (p *Patcher) Resolve() error {
 }
 
 func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
+	if err != nil {
+		return err
+	}
 	if !d.IsDir() {
 		filename := path.Base(thePath)
 		initPatch, err := p.NewPatch(thePath)
@@ -185,6 +197,9 @@ func (p *Patcher) Scan(folder string) error {
 
 func (p *Patcher) Process() error {
 	for _, patch := range p.ordered {
+		if p.dry {
+			fmt.Printf("would apply (weight %d): ", patch.Weight)
+		}
 		fmt.Println(patch.Filename)
 	}
 	return nil

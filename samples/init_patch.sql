@@ -34,3 +34,9 @@
 -- Might have to store the db password in plaintext, since I don't
 -- think postgres supports jwt login.
 
+create table users (
+	id int serial primary key,
+	username text not null,
+	created timestamp with time zone not null default CURRENT_TIMESTAMP,
+);
+

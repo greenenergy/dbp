@@ -34,10 +34,11 @@ are free to use them however you wish to organize your data.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := cmd.Flags().Lookup("folder").Value.String()
 
-		p := patcher.NewPatcher()
+		p := patcher.NewPatcher(cmd.Flags())
+
 		err := p.Scan(folder)
 		if err != nil {
-			fmt.Println("error:", err)
+			fmt.Println("error scanning:", err)
 		}
 		p.Process()
 	},
