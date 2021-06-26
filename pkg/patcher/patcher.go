@@ -131,11 +131,35 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 }
 
 // bumpWeight - the recursive weighting function that implements the prerequisite linking
-func (p *Patcher) bumpWeight(patch *Patch) {
-	patch.Weight += 1
-	for _, patchkey := range patch.Prereqs {
-		p.bumpWeight(p.patches[patchkey])
+func (p *Patcher) bumpWeight(depth int, patch *Patch, detectionMap map[string]*Patch) error {
+	_ = depth
+	/*
+		for x := 0; x < depth; x++ {
+			fmt.Printf(".")
+		}
+		fmt.Println(patch.Filename)
+	*/
+
+	if _, ok := detectionMap[patch.Id]; ok {
+		var filenames []string
+		for key := range detectionMap {
+			filenames = append(filenames, p.patches[key].Filename)
+		}
+		return fmt.Errorf("loop detected:\n%s", strings.Join(filenames, "\n"))
 	}
+
+	patch.Weight += 1
+	detectionMap[patch.Id] = patch
+
+	for _, patchkey := range patch.Prereqs {
+
+		err := p.bumpWeight(depth+1, p.patches[patchkey], detectionMap)
+		if err != nil {
+			return err
+		}
+	}
+	delete(detectionMap, patch.Id)
+	return nil
 }
 
 func (p *Patcher) Resolve() error {
@@ -143,6 +167,9 @@ func (p *Patcher) Resolve() error {
 
 	for _, patch := range p.patches {
 		patches = append(patches, patch)
+		detectionMap := make(map[string]*Patch)
+		detectionMap[patch.Id] = patch
+
 		for _, pre := range patch.Prereqs {
 			if other, ok := p.patches[pre]; !ok {
 				// TODO: It's possible to reference a patch that has already been applied. So if the patch is not found
@@ -151,7 +178,10 @@ func (p *Patcher) Resolve() error {
 				// and we can flag this as "applied patch found, though no file exists for it" for forensic examination.
 				return fmt.Errorf("bad ID reference. File %q refers to id %q which doesn't exist", patch.Filename, pre)
 			} else {
-				p.bumpWeight(other)
+				err := p.bumpWeight(0, other, detectionMap)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
