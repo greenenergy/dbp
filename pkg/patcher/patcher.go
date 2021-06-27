@@ -14,47 +14,27 @@ import (
 	"sort"
 	"strings"
 
+	engine "github.com/greenenergy/migrate/pkg/dbe"
+	"github.com/greenenergy/migrate/pkg/patch"
 	"github.com/spf13/pflag"
 )
 
-type Patch struct {
-	Id          string
-	Patch       string
-	Author      string
-	Description string
-	Tags        []string
-	Prereqs     []string
-	body        []byte
-	Weight      int
-	Filename    string
-}
-
-type ByWeight []*Patch
-
-func (by ByWeight) Len() int {
-	return len(by)
-}
-
-func (by ByWeight) Swap(i, j int) {
-	by[i], by[j] = by[j], by[i]
-}
-
-func (by ByWeight) Less(i, j int) bool {
-	return by[i].Weight > by[j].Weight
-}
-
 type Patcher struct {
-	initPatch *Patch
-	patches   map[string]*Patch
-	ordered   []*Patch
+	initPatch *patch.Patch
+	patches   map[string]*patch.Patch
+	ordered   []*patch.Patch
 	dry       bool
 }
 
 func NewPatcher(flags *pflag.FlagSet) *Patcher {
 
+	dry := false
+	if flags != nil {
+		dry = flags.Lookup("dry").Value.String() == "true"
+	}
 	return &Patcher{
-		dry:     flags.Lookup("dry").Value.String() == "true",
-		patches: make(map[string]*Patch),
+		dry:     dry,
+		patches: make(map[string]*patch.Patch),
 	}
 }
 
@@ -63,10 +43,15 @@ func (p *Patcher) String() string {
 	return string(dummy)
 }
 
+// Dry - Manually set the dryrun flag, mainly for testing
+func (p *Patcher) Dry(dry bool) {
+	p.dry = dry
+}
+
 // Rather than creating a reset function, just throw away
 // the patcher and create a new one
 
-func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
+func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
 	// Need to add the scanning & interpretation code here.
 
 	file, err := os.Open(thePath)
@@ -77,8 +62,7 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 
 	scanner := bufio.NewScanner(file)
 
-	newp := Patch{
-		//Id:       uuid.New().String(),
+	newp := patch.Patch{
 		Filename: thePath,
 	}
 
@@ -110,7 +94,7 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 			newp.Description = val
 		}
 	}
-	//fmt.Printf("file: %q, id: %q\n", thePath, newp.Id)
+
 	if newp.Id == "" {
 		// The ID field is an absolute must. Without it, there is
 		// no linking.
@@ -121,7 +105,7 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 	if err != nil {
 		return nil, err
 	}
-	newp.body = data
+	newp.Body = data
 
 	if other, ok := p.patches[newp.Id]; ok {
 		return nil, fmt.Errorf("duplicate id: %s, found in File %q and %q", newp.Id, other.Filename, newp.Filename)
@@ -131,16 +115,9 @@ func (p *Patcher) NewPatch(thePath string) (*Patch, error) {
 }
 
 // bumpWeight - the recursive weighting function that implements the prerequisite linking
-func (p *Patcher) bumpWeight(depth int, patch *Patch, detectionMap map[string]*Patch) error {
-	_ = depth
-	/*
-		for x := 0; x < depth; x++ {
-			fmt.Printf(".")
-		}
-		fmt.Println(patch.Filename)
-	*/
+func (p *Patcher) bumpWeight(thepatch *patch.Patch, detectionMap map[string]*patch.Patch) error {
 
-	if _, ok := detectionMap[patch.Id]; ok {
+	if _, ok := detectionMap[thepatch.Id]; ok {
 		var filenames []string
 		for key := range detectionMap {
 			filenames = append(filenames, p.patches[key].Filename)
@@ -148,37 +125,37 @@ func (p *Patcher) bumpWeight(depth int, patch *Patch, detectionMap map[string]*P
 		return fmt.Errorf("loop detected:\n%s", strings.Join(filenames, "\n"))
 	}
 
-	patch.Weight += 1
-	detectionMap[patch.Id] = patch
+	thepatch.Weight += 1
+	detectionMap[thepatch.Id] = thepatch
 
-	for _, patchkey := range patch.Prereqs {
+	for _, patchkey := range thepatch.Prereqs {
 
-		err := p.bumpWeight(depth+1, p.patches[patchkey], detectionMap)
+		err := p.bumpWeight(p.patches[patchkey], detectionMap)
 		if err != nil {
 			return err
 		}
 	}
-	delete(detectionMap, patch.Id)
+	delete(detectionMap, thepatch.Id)
 	return nil
 }
 
 func (p *Patcher) Resolve() error {
-	var patches []*Patch
+	var patches []*patch.Patch
 
-	for _, patch := range p.patches {
-		patches = append(patches, patch)
-		detectionMap := make(map[string]*Patch)
-		detectionMap[patch.Id] = patch
+	for _, thispatch := range p.patches {
+		patches = append(patches, thispatch)
+		detectionMap := make(map[string]*patch.Patch)
+		detectionMap[thispatch.Id] = thispatch
 
-		for _, pre := range patch.Prereqs {
+		for _, pre := range thispatch.Prereqs {
 			if other, ok := p.patches[pre]; !ok {
 				// TODO: It's possible to reference a patch that has already been applied. So if the patch is not found
 				// in the list of files, we should check the database to see if that ID already exists in the 'applied_patches' table,
 				// and if it does, then let this trhough. Possibly create a mock entry so the rest of the code works as expected,
 				// and we can flag this as "applied patch found, though no file exists for it" for forensic examination.
-				return fmt.Errorf("bad ID reference. File %q refers to id %q which doesn't exist", patch.Filename, pre)
+				return fmt.Errorf("bad ID reference. File %q refers to id %q which doesn't exist", thispatch.Filename, pre)
 			} else {
-				err := p.bumpWeight(0, other, detectionMap)
+				err := p.bumpWeight(other, detectionMap)
 				if err != nil {
 					return err
 				}
@@ -186,7 +163,7 @@ func (p *Patcher) Resolve() error {
 		}
 	}
 
-	sort.Sort(ByWeight(patches))
+	sort.Sort(patch.ByWeight(patches))
 	p.ordered = patches
 	return nil
 }
@@ -225,12 +202,19 @@ func (p *Patcher) Scan(folder string) error {
 	}
 }
 
-func (p *Patcher) Process() error {
-	for _, patch := range p.ordered {
+func (p *Patcher) Process(dbe engine.DBEngine) error {
+	for _, thepatch := range p.ordered {
 		if p.dry {
-			fmt.Printf("would apply (weight %d): ", patch.Weight)
+			fmt.Printf("would apply (weight %d): ", thepatch.Weight)
 		}
-		fmt.Println(patch.Filename)
+
+		if dbe != nil {
+			if err := dbe.Patch(thepatch); err != nil {
+				return err
+			}
+		} else {
+			fmt.Println(thepatch.Filename)
+		}
 	}
 	return nil
 }

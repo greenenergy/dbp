@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/greenenergy/migrate/pkg/patcher"
 	"github.com/spf13/cobra"
 )
 
@@ -30,20 +31,20 @@ var validateCmd = &cobra.Command{
 Problems could include multiple files with the same ID, referring to
 an ID that doesn't exist, etc`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("validate called")
+		folder := cmd.Flags().Lookup("folder").Value.String()
+
+		p := patcher.NewPatcher(nil)
+		p.Dry(true)
+
+		err := p.Scan(folder)
+		if err != nil {
+			fmt.Println("error scanning:", err)
+		}
+		p.Process(nil)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(validateCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// validateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// validateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	validateCmd.Flags().StringP("folder", "f", "", "set the processing folder")
 }
