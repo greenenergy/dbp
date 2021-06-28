@@ -24,8 +24,8 @@ import (
 )
 
 // dbCmd represents the db command
-var dbCmd = &cobra.Command{
-	Use:   "db",
+var applyCmd = &cobra.Command{
+	Use:   "apply",
 	Short: "apply patches to a database",
 	Long: `This function will collect all the patch files under a given folder,
 order them according to prerequisites and apply them to an indicated database.
@@ -48,17 +48,6 @@ are free to use them however you wish to organize your data.`,
 }
 
 func init() {
-	rootCmd.AddCommand(dbCmd)
-
-	dbCmd.Flags().StringP("folder", "f", "", "set the processing folder")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// dbCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// dbCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.AddCommand(applyCmd)
+	applyCmd.Flags().StringP("folder", "f", "", "set the processing folder")
 }
