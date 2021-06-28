@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	engine "github.com/greenenergy/migrate/pkg/dbe"
+	"github.com/greenenergy/migrate/pkg/dbe"
 	"github.com/greenenergy/migrate/pkg/patch"
 	"github.com/spf13/pflag"
 )
@@ -24,17 +24,34 @@ type Patcher struct {
 	patches   map[string]*patch.Patch
 	ordered   []*patch.Patch
 	dry       bool
+	engine    dbe.DBEngine
 }
 
 func NewPatcher(flags *pflag.FlagSet) *Patcher {
-
 	dry := false
+	var enginename string
+	var engine dbe.DBEngine
+
 	if flags != nil {
 		dry = flags.Lookup("dry").Value.String() == "true"
+		enginename = flags.Lookup("engine").Value.String()
 	}
+
+	switch enginename {
+	case "":
+		engine = dbe.NewMockDBE(flags)
+
+	case "postgres":
+		engine = dbe.NewPGDBE(flags)
+
+	case "sqlite":
+		engine = dbe.NewSQLiteDBE(flags)
+	}
+
 	return &Patcher{
 		dry:     dry,
 		patches: make(map[string]*patch.Patch),
+		engine:  engine,
 	}
 }
 
@@ -202,18 +219,14 @@ func (p *Patcher) Scan(folder string) error {
 	}
 }
 
-func (p *Patcher) Process(dbe engine.DBEngine) error {
+func (p *Patcher) Process() error {
 	for _, thepatch := range p.ordered {
 		if p.dry {
 			fmt.Printf("would apply (weight %d): ", thepatch.Weight)
 		}
 
-		if dbe != nil {
-			if err := dbe.Patch(thepatch); err != nil {
-				return err
-			}
-		} else {
-			fmt.Println(thepatch.Filename)
+		if err := p.engine.Patch(thepatch); err != nil {
+			return err
 		}
 	}
 	return nil

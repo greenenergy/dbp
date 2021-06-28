@@ -1,15 +1,16 @@
 package dbe
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/greenenergy/migrate/pkg/patch"
+	"github.com/spf13/pflag"
 )
 
 type SQLiteDBE struct {
 }
 
-func NewSQLiteDBE() DBEngine {
+func NewSQLiteDBE(flags *pflag.FlagSet) DBEngine {
 	return &SQLiteDBE{}
 }
 
@@ -18,13 +19,13 @@ func (p *SQLiteDBE) IsConfigured() bool {
 }
 
 func (p *SQLiteDBE) Configure() error {
-	return fmt.Errorf("unimplemented")
+	return errors.New("sqlite engine: Configure() unimplemented")
 }
 
 func (p *SQLiteDBE) GetInstalledIDs() ([]string, error) {
-	return nil, fmt.Errorf("unimplemented")
+	return nil, errors.New("sqlite engine: GetInstalledIDs() unimplemented")
 }
 
 func (p *SQLiteDBE) Patch(*patch.Patch) error {
-	return fmt.Errorf("unimplemented")
+	return errors.New("sqlite engine: Patch() unimplemented")
 }

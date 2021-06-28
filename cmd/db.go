@@ -19,7 +19,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/greenenergy/migrate/pkg/dbe"
 	"github.com/greenenergy/migrate/pkg/patcher"
 	"github.com/spf13/cobra"
 )
@@ -37,13 +36,14 @@ are free to use them however you wish to organize your data.`,
 
 		p := patcher.NewPatcher(cmd.Flags())
 
-		engine := dbe.NewPGDBE()
-
 		err := p.Scan(folder)
 		if err != nil {
 			fmt.Println("error scanning:", err)
 		}
-		p.Process(engine)
+		err = p.Process()
+		if err != nil {
+			fmt.Println("Problem applying patches:", err.Error())
+		}
 	},
 }
 

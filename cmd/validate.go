@@ -40,7 +40,7 @@ an ID that doesn't exist, etc`,
 		if err != nil {
 			fmt.Println("error scanning:", err)
 		}
-		p.Process(nil)
+		p.Process()
 	},
 }
 

@@ -1,15 +1,16 @@
 package dbe
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/greenenergy/migrate/pkg/patch"
+	"github.com/spf13/pflag"
 )
 
 type PGDBE struct {
 }
 
-func NewPGDBE() DBEngine {
+func NewPGDBE(flags *pflag.FlagSet) DBEngine {
 	return &PGDBE{}
 }
 
@@ -18,13 +19,13 @@ func (p *PGDBE) IsConfigured() bool {
 }
 
 func (p *PGDBE) Configure() error {
-	return fmt.Errorf("unimplemented")
+	return errors.New("postgres engine: Configure() unimplemented")
 }
 
 func (p *PGDBE) GetInstalledIDs() ([]string, error) {
-	return nil, fmt.Errorf("unimplemented")
+	return nil, errors.New("postgres engine: GetInstalledIDs() unimplemented")
 }
 
 func (p *PGDBE) Patch(*patch.Patch) error {
-	return fmt.Errorf("unimplemented")
+	return errors.New("postgres engine: Patch() unimplemented")
 }
