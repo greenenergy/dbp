@@ -27,10 +27,11 @@ type Patcher struct {
 	engine    dbe.DBEngine
 }
 
-func NewPatcher(flags *pflag.FlagSet) *Patcher {
+func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 	dry := false
 	var enginename string
 	var engine dbe.DBEngine
+	var err error
 
 	if flags != nil {
 		dry = flags.Lookup("dry").Value.String() == "true"
@@ -42,7 +43,10 @@ func NewPatcher(flags *pflag.FlagSet) *Patcher {
 		engine = dbe.NewMockDBE(flags)
 
 	case "postgres":
-		engine = dbe.NewPGDBE(flags)
+		engine, err = dbe.NewPGDBE(flags)
+		if err != nil {
+			return nil, err
+		}
 
 	case "sqlite":
 		engine = dbe.NewSQLiteDBE(flags)
@@ -52,7 +56,7 @@ func NewPatcher(flags *pflag.FlagSet) *Patcher {
 		dry:     dry,
 		patches: make(map[string]*patch.Patch),
 		engine:  engine,
-	}
+	}, nil
 }
 
 func (p *Patcher) String() string {
@@ -189,6 +193,12 @@ func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
 	if err != nil {
 		return err
 	}
+
+	if !strings.HasSuffix(strings.ToLower(thePath), ".sql") {
+		// skip anything that doesn't end with 'sql'
+		return nil
+	}
+
 	if !d.IsDir() {
 		filename := path.Base(thePath)
 		initPatch, err := p.NewPatch(thePath)

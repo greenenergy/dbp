@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/greenenergy/migrate/pkg/patcher"
 	"github.com/spf13/cobra"
@@ -33,10 +34,13 @@ an ID that doesn't exist, etc`,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := cmd.Flags().Lookup("folder").Value.String()
 
-		p := patcher.NewPatcher(nil)
+		p, err := patcher.NewPatcher(nil)
+		if err != nil {
+			log.Fatal(err)
+		}
 		p.Dry(true)
 
-		err := p.Scan(folder)
+		err = p.Scan(folder)
 		if err != nil {
 			fmt.Println("error scanning:", err)
 		}
