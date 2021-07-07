@@ -44,7 +44,7 @@ Each patch file will have a few specific and important fields in the top portion
  If the first few bytes of the file are not "-- PATCH v" then this is not a patch file and to not even try to parse it.
 
  The next keys to look for are:
- * id  (uuid for the file - generated on the spot)
+ * id  (unique string for the file -- uuids work great, but you can use any string)
  * author (email of author for the file - with the ID is a unique key)
  * prereq (comma separated list of IDs of patches that must have already been applied)
  * description (plain text description, which may be returned by list and info commands)
@@ -53,6 +53,5 @@ Each patch file will have a few specific and important fields in the top portion
 
  This is enough for now. The magic is in the prereq line. This allows patches to reference each other by ID. This way the filenames don't matter, so you don't have to worry about someone else already using your filename.
 
-So here's the expected workflow:
 
 
