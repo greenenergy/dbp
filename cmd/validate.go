@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/greenenergy/migrate/pkg/patcher"
+	"github.com/greenenergy/dbp/pkg/patcher"
 	"github.com/spf13/cobra"
 )
 

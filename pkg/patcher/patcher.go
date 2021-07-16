@@ -14,8 +14,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greenenergy/migrate/pkg/dbe"
-	"github.com/greenenergy/migrate/pkg/patch"
+	"github.com/greenenergy/dbp/pkg/dbe"
+	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/spf13/pflag"
 )
 

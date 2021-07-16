@@ -3,7 +3,7 @@ package dbe
 import (
 	"fmt"
 
-	"github.com/greenenergy/migrate/pkg/patch"
+	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/spf13/pflag"
 )
 

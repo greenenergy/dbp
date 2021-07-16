@@ -8,12 +8,13 @@
 # <enter annotation - doesn't matter what you say, there just has to be one>
 
 SRC = $(shell find . -name "*.go")
+PROG = dbp
 
 GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
 
-migrate: $(SRC) #api/server/tm.pb.go
-	go build -o migrate -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
+$(PROG): $(SRC) #api/server/tm.pb.go
+	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
 
 .PHONY: clean
 clean:
-	@rm -f migrate
+	@rm -f $(PROG)

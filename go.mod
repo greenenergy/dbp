@@ -1,4 +1,4 @@
-module github.com/greenenergy/migrate
+module github.com/greenenergy/dbp
 
 go 1.16
 

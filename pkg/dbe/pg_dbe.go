@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/greenenergy/migrate/pkg/patch"
+	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // This  is the postgres driver for sqlx
 	"github.com/spf13/pflag"

@@ -1,6 +1,6 @@
 package dbe
 
-import "github.com/greenenergy/migrate/pkg/patch"
+import "github.com/greenenergy/dbp/pkg/patch"
 
 type DBEngine interface {
 	IsConfigured() bool                 // Has this database already been used by migrate?
