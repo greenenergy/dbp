@@ -1,1 +1,9 @@
 dbp
+
+testdata/*
+!env/
+!good/
+!long_loop/
+!missing_id_1/
+!missing_id_2/
+!short_loop
