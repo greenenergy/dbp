@@ -4,13 +4,13 @@ import (
 	"errors"
 
 	"github.com/greenenergy/dbp/pkg/patch"
-	"github.com/spf13/pflag"
+	"github.com/greenenergy/dbp/pkg/set"
 )
 
 type SQLiteDBE struct {
 }
 
-func NewSQLiteDBE(flags *pflag.FlagSet) DBEngine {
+func NewSQLiteDBE(credsName string) DBEngine {
 	return &SQLiteDBE{}
 }
 
@@ -22,7 +22,7 @@ func (p *SQLiteDBE) Configure() error {
 	return errors.New("sqlite engine: Configure() unimplemented")
 }
 
-func (p *SQLiteDBE) GetInstalledIDs() ([]string, error) {
+func (p *SQLiteDBE) GetInstalledIDs() (*set.Set, error) {
 	return nil, errors.New("sqlite engine: GetInstalledIDs() unimplemented")
 }
 

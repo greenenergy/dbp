@@ -3,19 +3,23 @@
 -- author: greenenergy@gmail.com
 -- prereqs: fece2b8e-cf43-11eb-b7f3-07af1b70a47a,f6b5f306-cf4c-11eb-9e42-bbfce6e80ed7
 -- description: add accounts and transactions
+
 create table accounts (
-	id int serial primary key,
+	id serial primary key,
 	acct_holder integer not null references users(id),
-	balance float,
+	balance float
 );
 
-create table transactions (
-	id int serial primary key
+create table xactions (
+	id serial primary key
 );
 
-create table transaction_parts {
-	id int serial primary key,
-	transaction_id int not null transactions(id),
+create table xaction_parts (
+	id serial primary key,
+	transaction_id int not null references xactions(id),
+	account_id int not null references accounts(id),
 	amount float,
-	reconciled bool not null default 'f',
-};
+	reconciled bool not null default 'f'
+);
+
+

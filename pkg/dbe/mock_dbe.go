@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/greenenergy/dbp/pkg/patch"
+	"github.com/greenenergy/dbp/pkg/set"
 	"github.com/spf13/pflag"
 )
 
@@ -22,7 +23,7 @@ func (p *MockDBE) Configure() error {
 	return fmt.Errorf("unimplemented")
 }
 
-func (p *MockDBE) GetInstalledIDs() ([]string, error) {
+func (p *MockDBE) GetInstalledIDs() (*set.Set, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
 

@@ -49,13 +49,19 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringP("engine", "e", "", "database engine (postgres,sqlite)")
-	rootCmd.PersistentFlags().StringP("host", "", "", "database host")
-	rootCmd.PersistentFlags().StringP("port", "", "", "database port")
-	rootCmd.PersistentFlags().StringP("dbname", "n", "", "database name")
-	rootCmd.PersistentFlags().StringP("dbuser", "u", "", "database user")
-	rootCmd.PersistentFlags().StringP("dbpass", "p", "", "database password")
+	rootCmd.PersistentFlags().StringP("dbcreds", "z", "", "Name of db credentials file")
+
 	rootCmd.PersistentFlags().BoolP("dry", "", false, "dry run")
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable debug log")
+
+	/*
+		rootCmd.PersistentFlags().StringP("host", "", "", "database host")
+		rootCmd.PersistentFlags().StringP("port", "", "", "database port")
+		rootCmd.PersistentFlags().StringP("dbname", "n", "", "database name")
+		rootCmd.PersistentFlags().StringP("dbuser", "u", "", "database user")
+		rootCmd.PersistentFlags().StringP("dbpass", "p", "", "database password")
+	*/
+
 }
 
 // initConfig reads in config file and ENV variables if set.

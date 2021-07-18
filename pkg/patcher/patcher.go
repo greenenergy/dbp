@@ -20,11 +20,12 @@ import (
 )
 
 type Patcher struct {
-	initPatch *patch.Patch
-	patches   map[string]*patch.Patch
-	ordered   []*patch.Patch
-	dry       bool
-	engine    dbe.DBEngine
+	initPatch      *patch.Patch
+	patches        map[string]*patch.Patch
+	alreadyPatched map[string]bool
+	ordered        []*patch.Patch
+	dry            bool
+	engine         dbe.DBEngine
 }
 
 func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
@@ -38,18 +39,20 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 		enginename = flags.Lookup("engine").Value.String()
 	}
 
+	credsName := flags.Lookup("dbcreds").Value.String()
+
 	switch enginename {
 	case "":
 		engine = dbe.NewMockDBE(flags)
 
 	case "postgres":
-		engine, err = dbe.NewPGDBE(flags)
+		engine, err = dbe.NewPGDBE(credsName)
 		if err != nil {
 			return nil, err
 		}
 
 	case "sqlite":
-		engine = dbe.NewSQLiteDBE(flags)
+		engine = dbe.NewSQLiteDBE(credsName)
 	}
 
 	return &Patcher{
@@ -230,7 +233,15 @@ func (p *Patcher) Scan(folder string) error {
 }
 
 func (p *Patcher) Process() error {
+	ids, err := p.engine.GetInstalledIDs()
+	if err != nil {
+		return err
+	}
+
 	for _, thepatch := range p.ordered {
+		if ids.Contains(thepatch.Id) {
+			continue
+		}
 		if p.dry {
 			fmt.Printf("would apply (weight %d): ", thepatch.Weight)
 		}
