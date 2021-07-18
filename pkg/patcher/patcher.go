@@ -238,6 +238,7 @@ func (p *Patcher) Process() error {
 		return err
 	}
 
+	numDone := 0
 	for _, thepatch := range p.ordered {
 		if ids.Contains(thepatch.Id) {
 			continue
@@ -249,6 +250,12 @@ func (p *Patcher) Process() error {
 		if err := p.engine.Patch(thepatch); err != nil {
 			return err
 		}
+		numDone += 1
+	}
+	if numDone > 0 {
+		fmt.Printf("Applied %d patches\n", numDone)
+	} else {
+		fmt.Println("Nothing to do.")
 	}
 	return nil
 }

@@ -41,13 +41,10 @@ func NewPGDBE(credsName string) (DBEngine, error) {
 			port = flags.Lookup("port").Value.String()
 		}
 	*/
-	fmt.Println("going to try to read file:", credsName)
 	data, err := ioutil.ReadFile(credsName)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Going to try to unmarshall the data")
 
 	err = json.Unmarshal(data, &pgargs)
 	if err != nil {
@@ -64,7 +61,6 @@ func NewPGDBE(credsName string) (DBEngine, error) {
 		fmt.Println("error opening database:", err.Error())
 		return nil, fmt.Errorf("couldn't open postgres: %v", err.Error())
 	}
-	fmt.Println("got a connection to the db")
 
 	// Once we have a connection, we should check for our table & data.
 	// If it doesn't exist, then this is the first time we're running

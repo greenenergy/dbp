@@ -2,7 +2,7 @@
 	"host":"localhost",
 	"port":5432,
 	"dbname":"patchtest",
-	"username":"pgtester",
+	"username":"pgpatcher",
 	"password":"badpassword"
 
 }
