@@ -24,7 +24,7 @@ func (p *MockDBE) Configure() error {
 }
 
 func (p *MockDBE) GetInstalledIDs() (*set.Set, error) {
-	return nil, fmt.Errorf("unimplemented")
+	return &set.Set{}, nil
 }
 
 func (p *MockDBE) Patch(thepatch *patch.Patch) error {

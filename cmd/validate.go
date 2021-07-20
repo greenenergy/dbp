@@ -34,7 +34,7 @@ an ID that doesn't exist, etc`,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := cmd.Flags().Lookup("folder").Value.String()
 
-		p, err := patcher.NewPatcher(nil)
+		p, err := patcher.NewPatcher(cmd.Flags())
 		if err != nil {
 			log.Fatal(err)
 		}

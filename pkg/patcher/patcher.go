@@ -44,18 +44,32 @@ type Patcher struct {
 	engine         dbe.DBEngine
 }
 
+func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
+	flg := flags.Lookup(name)
+	if flg != nil {
+		if flg.Value != nil {
+			return flg.Value.String(), nil
+		}
+	}
+	return "", fmt.Errorf("flag not found")
+}
+
 func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 	dry := false
 	var enginename string
+	var credsName string
 	var engine dbe.DBEngine
 	var err error
 
 	if flags != nil {
 		dry = flags.Lookup("dry").Value.String() == "true"
 		enginename = flags.Lookup("engine").Value.String()
-	}
 
-	credsName := flags.Lookup("dbcreds").Value.String()
+		tmp, err := GetFlagString("dbcreds", flags)
+		if err == nil {
+			credsName = tmp
+		}
+	}
 
 	switch enginename {
 	case "":
@@ -68,7 +82,10 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 		}
 
 	case "sqlite":
-		engine = dbe.NewSQLiteDBE(credsName)
+		engine, err = dbe.NewSQLiteDBE(credsName)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Patcher{
