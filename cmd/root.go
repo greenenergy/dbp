@@ -32,8 +32,9 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "dbp",
 	Short: "database patcher",
-	Long: `Given a folder of db patch files (and other folds),
-execute the patches in order of dependency.`,
+	Long: `Given a folder of db patch files (and other folders), execute the
+patches in order of dependency. Filenames and folder names don't matter, just
+the IDs within.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
