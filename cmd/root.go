@@ -54,14 +54,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("dry", "", false, "dry run")
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable debug log")
 
-	/*
-		rootCmd.PersistentFlags().StringP("host", "", "", "database host")
-		rootCmd.PersistentFlags().StringP("port", "", "", "database port")
-		rootCmd.PersistentFlags().StringP("dbname", "n", "", "database name")
-		rootCmd.PersistentFlags().StringP("dbuser", "u", "", "database user")
-		rootCmd.PersistentFlags().StringP("dbpass", "p", "", "database password")
-	*/
-
 }
 
 // initConfig reads in config file and ENV variables if set.

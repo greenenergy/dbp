@@ -285,7 +285,7 @@ func (p *Patcher) Process() error {
 			continue
 		}
 		if p.verbose && !p.dry {
-			fmt.Printf("applying: %s\n", thepatch.Filename)
+			fmt.Printf("applying: (weight %d) %s\n", thepatch.Weight, thepatch.Filename)
 		}
 
 		if p.dry {

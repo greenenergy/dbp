@@ -4,7 +4,7 @@
 -- prereqs: fc8b6bf5-1ba1-44e9-aa05-a23e5dccf40d
 -- description: 
 
-insert into users(name, email) values ('cfox', 'greenenergy@gmail.com'); -- 1
+insert into users(name, email) values ('someguy', 'someguy@example.com'); -- 1
 insert into orgs(name) values ('supplier 1'); -- 1
 insert into orgs(name) values ('client 1'); -- 2
 
@@ -19,7 +19,7 @@ insert into accounts(actype, holder, amount) values ('AR', 2, 0); -- 4
 
 insert into accounts(actype, holder, amount) values ('Purchase', 3, 0);
 
--- Create a $10 transaction, from 'supplier 1' to cfox's deposit account.
+-- Create a $10 transaction, from 'supplier 1' to someguy's deposit account.
 insert into transactions(description) values ('test1'); -- 1
 insert into transaction_parts(account_id, amount) values (3, -10);
 insert into transaction_parts(account_id, amount) values (1, 10);
