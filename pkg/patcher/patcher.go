@@ -284,14 +284,11 @@ func (p *Patcher) Process() error {
 		if ids.Contains(thepatch.Id) {
 			continue
 		}
-		if p.verbose && !p.dry {
+		if p.verbose || p.dry {
 			fmt.Printf("applying: (weight %d) %s\n", thepatch.Weight, thepatch.Filename)
 		}
 
-		if p.dry {
-			fmt.Printf("would apply (weight %d): %s\n", thepatch.Weight, thepatch.Filename)
-		} else {
-
+		if !p.dry {
 			if err := p.engine.Patch(thepatch); err != nil {
 				return err
 			}
