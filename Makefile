@@ -1,8 +1,4 @@
-# tm - timemanager executale
-# Make targets:
-# make  		 - builds linux version
-#
-# For the version tagging, you must use annotated tags (or get gets unhappy).
+# For the version tagging, you must use annotated tags (or git gets unhappy).
 # So:
 # git tag -a vX.Y.Z
 # <enter annotation - doesn't matter what you say, there just has to be one>

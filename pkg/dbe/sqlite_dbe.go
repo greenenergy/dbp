@@ -16,6 +16,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package dbe
 
+/*
+Note:
+This file was originally written mainly with Queryx() calls, but for some
+reason the create & insert functions didn't actually perform any permanent
+change to the database. After running, it was as though nothing had been
+done, but no errors were reported. After changing from Query() to Exec(),
+everything worked. I don't know why this is the case.
+*/
+
 import (
 	"encoding/json"
 	"errors"
