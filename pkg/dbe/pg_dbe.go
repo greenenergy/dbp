@@ -19,6 +19,7 @@ import (
 type PGDBE struct {
 	conn    *sqlx.DB
 	already map[string]bool
+	verbose bool
 }
 
 type PGArgs struct {
@@ -29,18 +30,9 @@ type PGArgs struct {
 	Password string `json:"password"`
 }
 
-func NewPGDBE(credsName string) (DBEngine, error) {
+func NewPGDBE(credsName string, verbose bool) (DBEngine, error) {
 
 	var pgargs PGArgs
-	/*
-		var hostname, user, dbname, dbpass, port string
-		if flags != nil {
-			hostname = flags.Lookup("dbhost").Value.String()
-			dbname = flags.Lookup("dbname").Value.String()
-			dbpass = flags.Lookup("dbpass").Value.String()
-			port = flags.Lookup("port").Value.String()
-		}
-	*/
 	data, err := ioutil.ReadFile(credsName)
 	if err != nil {
 		return nil, err
@@ -69,7 +61,10 @@ func NewPGDBE(credsName string) (DBEngine, error) {
 	// all the patch files to be present with a given database? If we do
 	// expect that, then we wouldn't need to load in the existing patches.
 
-	pgdbe := PGDBE{conn: conn}
+	pgdbe := PGDBE{
+		conn:    conn,
+		verbose: verbose,
+	}
 
 	err = pgdbe.CheckInstall()
 	if err != nil {

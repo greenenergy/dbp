@@ -43,6 +43,7 @@ are free to use them however you wish to organize your data.`,
 		err = p.Scan(folder)
 		if err != nil {
 			fmt.Println("error scanning:", err)
+			return
 		}
 		err = p.Process()
 		if err != nil {
@@ -54,4 +55,5 @@ are free to use them however you wish to organize your data.`,
 func init() {
 	rootCmd.AddCommand(applyCmd)
 	applyCmd.Flags().StringP("folder", "f", "", "set the processing folder")
+	applyCmd.Flags().BoolP("verbose", "v", false, "be verbose")
 }

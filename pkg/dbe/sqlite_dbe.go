@@ -5,10 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"net"
 	"strings"
-	"time"
 
 	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/greenenergy/dbp/pkg/set"
@@ -18,14 +15,14 @@ import (
 
 type SQLiteDBE struct {
 	conn    *sqlx.DB
-	already set.Set
+	verbose bool
 }
 
 type SQLITEArgs struct {
 	Filename string `json:"filename"`
 }
 
-func NewSQLiteDBE(credsName string) (DBEngine, error) {
+func NewSQLiteDBE(credsName string, verbose bool) (DBEngine, error) {
 	var sqliteargs SQLITEArgs
 	data, err := ioutil.ReadFile(credsName)
 	if err != nil {
@@ -37,14 +34,24 @@ func NewSQLiteDBE(credsName string) (DBEngine, error) {
 		return nil, err
 	}
 
+	if verbose {
+		fmt.Println("about to open:", sqliteargs.Filename)
+	}
 	conn, err := sqlx.Open("sqlite3", sqliteargs.Filename)
 	if err != nil {
-		return nil, fmt.Errorf("problem opening sqlite db:", err.Error())
+		return nil, fmt.Errorf("problem opening sqlite db: %s", err.Error())
 	}
 
-	return &SQLiteDBE{
-		conn: conn,
-	}, nil
+	dbe := &SQLiteDBE{
+		conn:    conn,
+		verbose: verbose,
+	}
+
+	err = dbe.CheckInstall()
+	if err != nil {
+		return nil, err
+	}
+	return dbe, nil
 }
 
 func (p *SQLiteDBE) IsConfigured() bool {
@@ -76,57 +83,40 @@ func (p *SQLiteDBE) GetInstalledIDs() (*set.Set, error) {
 }
 
 func (p *SQLiteDBE) CheckInstall() error {
-	success := false
-	retries := 10
-
-	for x := 0; x < retries; x++ {
-		_, err := p.conn.Queryx("select count(*) from dbp_patch_table")
-		if err != nil {
-			if _, ok := err.(*net.OpError); ok {
-				fmt.Println("this is a network error, gonna retry:", err.Error())
-				time.Sleep(time.Second)
-			} else {
-				//fmt.Printf("Got an error trying to see if I am alread installed")
-				//log.Fatal(err.Error())
-				_, err = p.conn.Queryx(`
+	_, err := p.conn.Query("select count(*) from dbp_patch_table")
+	if err != nil {
+		fmt.Println("Error querying, now going to try to create dbp_patch_table")
+		_, err := p.conn.Exec(`
 create table dbp_patch_table (
 	id text primary key,
-	created timestamp with time zone not null default CURRENT_TIMESTAMP,
+	created timestamp with time zone not null default (datetime('now','localtime')),
 	prereqs text,
 	description text
-)
+);
 `)
-				if err != nil {
-					return fmt.Errorf("problem creating patch table:%q", err)
-				}
-
-			}
-		} else {
-			success = true
+		if err != nil {
+			fmt.Println("Error creating patch table:", err.Error())
+			return fmt.Errorf("problem creating patch table:%q", err)
 		}
-	}
-	if !success {
-		fmt.Println("couldn't find the db")
-		log.Fatal("no database")
+
 	}
 	return nil
 }
 
 func (p *SQLiteDBE) Patch(ptch *patch.Patch) error {
-
 	tx, err := p.conn.Begin()
 	if err != nil {
 		return fmt.Errorf("problem while trying to apply patch: %s", err.Error())
 	}
 
-	_, err = tx.Query(string(ptch.Body))
+	_, err = tx.Exec(string(ptch.Body))
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
 	}
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
-	_, err = tx.Query("insert into dbp_patch_table(id, prereqs, description) values ($1, $2, $3)",
+	_, err = tx.Exec("insert into dbp_patch_table(id, prereqs, description) values ($1, $2, $3)",
 		ptch.Id, prereqs, ptch.Description)
 
 	if err != nil {
@@ -134,6 +124,9 @@ func (p *SQLiteDBE) Patch(ptch *patch.Patch) error {
 		return fmt.Errorf("problem updating patch record %s: %s", ptch.Id, err.Error())
 	}
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("error committing:", err.Error())
+	}
 	return nil
 }

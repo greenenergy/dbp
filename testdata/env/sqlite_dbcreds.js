@@ -1,3 +1,0 @@
-{
-	"path":"testslqite.db"
-}

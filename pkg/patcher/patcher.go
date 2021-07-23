@@ -36,12 +36,12 @@ import (
 )
 
 type Patcher struct {
-	initPatch      *patch.Patch
-	patches        map[string]*patch.Patch
-	alreadyPatched map[string]bool
-	ordered        []*patch.Patch
-	dry            bool
-	engine         dbe.DBEngine
+	initPatch *patch.Patch
+	patches   map[string]*patch.Patch
+	ordered   []*patch.Patch
+	dry       bool
+	verbose   bool
+	engine    dbe.DBEngine
 }
 
 func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
@@ -56,6 +56,7 @@ func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
 
 func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 	dry := false
+	verbose := false
 	var enginename string
 	var credsName string
 	var engine dbe.DBEngine
@@ -69,6 +70,8 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 		if err == nil {
 			credsName = tmp
 		}
+
+		verbose = flags.Lookup("verbose").Value.String() == "true"
 	}
 
 	switch enginename {
@@ -76,13 +79,13 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 		engine = dbe.NewMockDBE(flags)
 
 	case "postgres":
-		engine, err = dbe.NewPGDBE(credsName)
+		engine, err = dbe.NewPGDBE(credsName, verbose)
 		if err != nil {
 			return nil, err
 		}
 
 	case "sqlite":
-		engine, err = dbe.NewSQLiteDBE(credsName)
+		engine, err = dbe.NewSQLiteDBE(credsName, verbose)
 		if err != nil {
 			return nil, err
 		}
@@ -90,6 +93,7 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 
 	return &Patcher{
 		dry:     dry,
+		verbose: verbose,
 		patches: make(map[string]*patch.Patch),
 		engine:  engine,
 	}, nil
@@ -135,7 +139,7 @@ func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
 		}
 
 		key := parts[1]
-		val := parts[2]
+		val := strings.Trim(parts[2], " ")
 		switch key {
 		case "PATCH":
 			newp.Patch = val
@@ -229,13 +233,17 @@ func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
 	if err != nil {
 		return err
 	}
-
 	if !strings.HasSuffix(strings.ToLower(thePath), ".sql") {
 		// skip anything that doesn't end with 'sql'
 		return nil
 	}
 
 	if !d.IsDir() {
+
+		if p.verbose {
+			fmt.Println("walkdir, checking:", thePath)
+		}
+
 		filename := path.Base(thePath)
 		initPatch, err := p.NewPatch(thePath)
 		if err != nil {
@@ -276,19 +284,23 @@ func (p *Patcher) Process() error {
 		if ids.Contains(thepatch.Id) {
 			continue
 		}
-		if p.dry {
-			fmt.Printf("would apply (weight %d): ", thepatch.Weight)
+		if p.verbose && !p.dry {
+			fmt.Printf("applying: %s\n", thepatch.Filename)
 		}
 
-		if err := p.engine.Patch(thepatch); err != nil {
-			return err
+		if p.dry {
+			fmt.Printf("would apply (weight %d): %s\n", thepatch.Weight, thepatch.Filename)
+		} else {
+
+			if err := p.engine.Patch(thepatch); err != nil {
+				return err
+			}
 		}
 		numDone += 1
 	}
 	if numDone > 0 {
 		fmt.Printf("Applied %d patches\n", numDone)
-	} else {
-		fmt.Println("Nothing to do.")
 	}
+
 	return nil
 }

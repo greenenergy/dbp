@@ -7,5 +7,7 @@ testdata/*
 !testdata/missing_id_1/
 !testdata/missing_id_2/
 !testdata/short_loop
-testdata/env/testdata
+testdata/env/pg/data
+testdata/env/sqlite/test.db
+
 

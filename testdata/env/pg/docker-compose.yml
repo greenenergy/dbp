@@ -10,7 +10,7 @@ services:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
             - /etc/passwd:/etc/passwd:ro
-            - ./testdata/pgdata:/var/lib/postgresql/data
+            - ./data/pgdata:/var/lib/postgresql/data
               #- ./testdata/files:/files
               #- ./schema.sql:/schema.sql:ro
               #- ./postgresql.conf:/etc/postgresql/postgresql.conf
