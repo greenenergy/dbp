@@ -145,12 +145,8 @@ func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
 			newp.Patch = val
 		case "id":
 			newp.Id = val
-		case "author":
-			newp.Author = val
 		case "prereqs":
 			newp.Prereqs = strings.Split(val, ",")
-		case "tags":
-			newp.Tags = strings.Split(val, ",")
 		case "description":
 			newp.Description = val
 		}
