@@ -27,7 +27,6 @@ everything worked. I don't know why this is the case.
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -72,19 +71,11 @@ func NewSQLiteDBE(credsName string, verbose bool) (DBEngine, error) {
 		verbose: verbose,
 	}
 
-	err = dbe.CheckInstall()
+	err = dbe.checkInstall()
 	if err != nil {
 		return nil, err
 	}
 	return dbe, nil
-}
-
-func (p *SQLiteDBE) IsConfigured() bool {
-	return false
-}
-
-func (p *SQLiteDBE) Configure() error {
-	return errors.New("sqlite engine: Configure() unimplemented")
 }
 
 func (p *SQLiteDBE) GetInstalledIDs() (*set.Set, error) {
@@ -107,7 +98,7 @@ func (p *SQLiteDBE) GetInstalledIDs() (*set.Set, error) {
 	return &output, nil
 }
 
-func (p *SQLiteDBE) CheckInstall() error {
+func (p *SQLiteDBE) checkInstall() error {
 	_, err := p.conn.Query("select count(*) from dbp_patch_table")
 	if err != nil {
 		fmt.Println("Error querying, now going to try to create dbp_patch_table")

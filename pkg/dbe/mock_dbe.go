@@ -31,14 +31,6 @@ func NewMockDBE(flags *pflag.FlagSet) DBEngine {
 	return &MockDBE{}
 }
 
-func (p *MockDBE) IsConfigured() bool {
-	return false
-}
-
-func (p *MockDBE) Configure() error {
-	return fmt.Errorf("unimplemented")
-}
-
 func (p *MockDBE) GetInstalledIDs() (*set.Set, error) {
 	return &set.Set{}, nil
 }

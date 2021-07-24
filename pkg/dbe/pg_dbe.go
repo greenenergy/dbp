@@ -18,7 +18,6 @@ package dbe
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -34,7 +33,6 @@ import (
 
 type PGDBE struct {
 	conn    *sqlx.DB
-	already map[string]bool
 	verbose bool
 }
 
@@ -82,7 +80,7 @@ func NewPGDBE(credsName string, verbose bool) (DBEngine, error) {
 		verbose: verbose,
 	}
 
-	err = pgdbe.CheckInstall()
+	err = pgdbe.checkInstall()
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +88,7 @@ func NewPGDBE(credsName string, verbose bool) (DBEngine, error) {
 	return &pgdbe, nil
 }
 
-func (p *PGDBE) CheckInstall() error {
+func (p *PGDBE) checkInstall() error {
 	success := false
 	retries := 10
 
@@ -125,14 +123,6 @@ create table dbp_patch_table (
 		log.Fatal("no database")
 	}
 	return nil
-}
-
-func (p *PGDBE) IsConfigured() bool {
-	return false
-}
-
-func (p *PGDBE) Configure() error {
-	return errors.New("postgres engine: Configure() unimplemented")
 }
 
 func (p *PGDBE) GetInstalledIDs() (*set.Set, error) {

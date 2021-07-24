@@ -22,8 +22,6 @@ import (
 )
 
 type DBEngine interface {
-	IsConfigured() bool                 // Has this database already been used by migrate?
-	Configure() error                   // Set up the table needed to track patches
 	GetInstalledIDs() (*set.Set, error) // Return the IDs of patches that have already been installed
 	Patch(*patch.Patch) error
 }
