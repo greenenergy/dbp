@@ -272,6 +272,8 @@ func (p *Patcher) Process() error {
 	if err != nil {
 		return err
 	}
+	numDone := 0
+
 	// Make sure to apply the init_patch.sql file first
 	if ids.Len() == 0 {
 		if err = p.engine.Patch(p.initPatch); err != nil {
@@ -279,9 +281,9 @@ func (p *Patcher) Process() error {
 		}
 		// Skip applying this in the following loop
 		ids.Add(p.initPatch.Id)
+		numDone += 1
 	}
 
-	numDone := 0
 	for _, thepatch := range p.ordered {
 		if ids.Contains(thepatch.Id) {
 			continue
