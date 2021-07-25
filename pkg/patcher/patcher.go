@@ -276,6 +276,11 @@ func (p *Patcher) Process() error {
 
 	// Make sure to apply the init_patch.sql file first
 	if ids.Len() == 0 {
+
+		if p.verbose || p.dry {
+			fmt.Printf("applying: (weight %d) %s\n", p.initPatch.Weight, p.initPatch.Filename)
+		}
+
 		if err = p.engine.Patch(p.initPatch); err != nil {
 			return err
 		}
