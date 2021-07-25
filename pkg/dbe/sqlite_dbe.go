@@ -101,7 +101,6 @@ func (p *SQLiteDBE) GetInstalledIDs() (*set.Set, error) {
 func (p *SQLiteDBE) checkInstall() error {
 	_, err := p.conn.Query("select count(*) from dbp_patch_table")
 	if err != nil {
-		fmt.Println("Error querying, now going to try to create dbp_patch_table")
 		_, err := p.conn.Exec(`
 create table dbp_patch_table (
 	id text primary key,
