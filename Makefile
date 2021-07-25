@@ -12,9 +12,14 @@ empty:
 	@echo "Make targets:"
 	@echo "make dbp"
 	@echo "make clean"
+	@echo "make install"
 
 $(PROG): $(SRC) #api/server/tm.pb.go
 	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
+
+.PHONY: install
+install:
+	go install -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
 
 .PHONY: clean
 clean:
