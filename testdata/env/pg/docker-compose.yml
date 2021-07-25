@@ -1,4 +1,4 @@
-version: "3"
+version: "3.3"
 services:
     postgres:
         image: postgres:10.3
@@ -16,4 +16,7 @@ services:
               #- ./postgresql.conf:/etc/postgresql/postgresql.conf
               #- ./resetdb.sh:/resetdb.sh
         user: ${CURRENT_UID}
+    postgres-setup:
+        image: postgres-setup
+        #build: .
 

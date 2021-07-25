@@ -274,6 +274,14 @@ func (p *Patcher) Process() error {
 	if err != nil {
 		return err
 	}
+	// Make sure to apply the init_patch.sql file first
+	if ids.Len() == 0 {
+		if err = p.engine.Patch(p.initPatch); err != nil {
+			return err
+		}
+		// Skip applying this in the following loop
+		ids.Add(p.initPatch.Id)
+	}
 
 	numDone := 0
 	for _, thepatch := range p.ordered {

@@ -31,7 +31,9 @@ func NewSet() *Set {
 		contents: make(map[string]bool),
 	}
 }
-
+func (s *Set) Len() int {
+	return len(s.contents)
+}
 func (s *Set) Contains(key string) bool {
 	if !s.init {
 		s.contents = make(map[string]bool)
