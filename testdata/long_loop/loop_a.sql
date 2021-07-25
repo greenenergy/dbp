@@ -1,5 +1,3 @@
--- PATCH: v0.0.1
 -- id: file-a
--- author: 
 -- prereqs: file-c,file-b
 -- description: 

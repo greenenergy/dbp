@@ -1,5 +1,3 @@
--- PATCH: v0.0.1
 -- id: file-f
--- author: 
 -- prereqs: file-g
 -- description: 

@@ -12,3 +12,9 @@ You can launch with "--dry" which will set dbp into `dry run` mode, where it wil
 
 Each patch file is executed in its own transaction, and the id is appended to a dbp private table in the same transaction. If there is a problem, then the transaction is rolled back and neither the patch nor the update remains. 
 
+## Testing
+
+You can demonstrate dbp's detection of various problems via patch hierarchies in the testdata folder. Each folder is named for the kind of error it illustrates, as in :
+
+    ./dbp apply -f testdata/long_loop
+    ./dbp apply -f testdata/short_loop

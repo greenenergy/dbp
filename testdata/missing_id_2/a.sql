@@ -1,5 +1,3 @@
--- PATCH: v0.0.1
 -- id: 0cea2d61-b915-4b44-9141-b0aa926230f9
--- author: 
 -- prereqs: this-is-not-a-valid-id
 -- description: 

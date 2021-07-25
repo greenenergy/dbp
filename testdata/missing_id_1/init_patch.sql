@@ -1,6 +1,4 @@
--- PATCH: v0.0.1
 -- id: 
--- author: greenenergy@gmail.com
 -- description: Initial schema file.
 
 create table users (
