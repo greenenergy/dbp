@@ -4,23 +4,11 @@ This program allows you to define and maintain an SQL database through the use o
 
 Filenames and directories are ignored by the patcher, or more specifically they don't factor into the processing of the scripts. Only the IDs and the prereq relationships between them. So you are free to name the scripts any way you wish, and have any folder hierarchy you wish.
 
-You can run `dbp new` in order to create a new patch file. dbp will generate a new UUID, and you can just fill out the rest for your patch.
+dbp uses ids to establish precedence, and these IDs can be any string without spaces or commas. UUIDs are a good choice, and the `./dbp new` command will generate a new UUID for you. However, you can use any string you wish, as long as it is unique and has no spaces or commas.
 
+This patching system is designed for "forward" patching only - as in, there is no rollback functionality. Rolling back a patch for code is trivial, but there are database operations you can perform in your patch files that cannot be "rolled back" - such as deleting rows from tables. In order to be able to perform a true "rollback", you will need to snapshot your database ahead of the patch, and then you can roll back to the snapshot if necessary.
 
-## Operation
+You can launch with "--dry" which will set dbp into `dry run` mode, where it will tell you what work it will do without actually doing anything. This also allows you to check for potential problems with IDs and prereqs.
 
-Each patch file will have a few specific and important fields in the top portion of the sql patch file. The very first thing that should be in the file, right at the top, is:
-
-  -- PATCH vX.Y.Z
- 
- If the first few bytes of the file are not "-- PATCH v" then this is not a patch file and to not even try to parse it.
-
- The next keys to look for are:
- * id  (unique string for the file -- uuids work great, but you can use any string)
- * prereq (comma separated list of IDs of patches that must have already been applied)
- * description (plain text description, which may be returned by list and info commands)
-
- This is enough for now. The magic is in the prereq line. This allows patches to reference each other by ID. This way the filenames don't matter, so you don't have to worry about someone else already using your filename.
-
-
+Each patch file is executed in its own transaction, and the id is appended to a dbp private table in the same transaction. If there is a problem, then the transaction is rolled back and neither the patch nor the update remains. 
 

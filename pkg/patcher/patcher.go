@@ -141,8 +141,6 @@ func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
 		key := parts[1]
 		val := strings.Trim(parts[2], " ")
 		switch key {
-		case "PATCH":
-			newp.Patch = val
 		case "id":
 			newp.Id = val
 		case "prereqs":

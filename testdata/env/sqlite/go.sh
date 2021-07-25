@@ -1,3 +1,3 @@
 #!/bin/sh
 
-../../../dbp apply -e sqlite -z dbcreds.js -f patches -v
+../../../dbp apply -e sqlite -z dbcreds.json -f patches -v

@@ -16,7 +16,7 @@ start:
 
 .PHONY: install
 install:
-	../../../dbp apply -e postgres -z dbcreds.js -f patches -v
+	../../../dbp apply -e postgres -z dbcreds.json -f patches -v
 
 stop:
 	docker-compose down

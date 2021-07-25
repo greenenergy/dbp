@@ -30,9 +30,7 @@ var newCmd = &cobra.Command{
 	Long: `Helper function to create a new patch file for you.
 It just fills out the header parameters and generates an ID.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("-- PATCH: v0.0.1")
 		fmt.Println("-- id:", uuid.New().String())
-		fmt.Println("-- author: ")
 		fmt.Println("-- prereqs: ")
 		fmt.Println("-- description: ")
 	},

@@ -18,10 +18,7 @@ package patch
 
 type Patch struct {
 	Id          string   `json:"id"`
-	Patch       string   `json:"patch"`
-	Author      string   `json:"author"`
 	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
 	Prereqs     []string `json:"prereqs"`
 	Body        []byte   `json:"-"`
 	Weight      int      `json:"weight"`

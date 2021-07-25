@@ -1,6 +1,4 @@
--- PATCH: v0.0.1
 -- id: fc8b6bf5-1ba1-44e9-aa05-a23e5dccf40d
--- author: greenenergy@gmail.com
 -- prereqs: 
 -- description: 
 

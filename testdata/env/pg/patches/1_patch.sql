@@ -1,10 +1,6 @@
--- PATCH: v0.0.1
 -- id: 356e7082-cf3e-11eb-810a-739771ae8923
--- author: greenenergy@gmail.com
 -- prereq: 
 -- description: This is where you would put a one liner for the file.
--- tags: beta
--- created: <totally optional, nothing uses this field>
 
 -- The migrate tool could be used to create a skeleton migration file.
 -- This skeleton file would automatically have the PATCH, ID, and

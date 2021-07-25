@@ -18,5 +18,4 @@ services:
         user: ${CURRENT_UID}
     postgres-setup:
         image: postgres-setup
-        #build: .
 
