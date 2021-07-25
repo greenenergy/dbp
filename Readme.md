@@ -18,3 +18,8 @@ You can demonstrate dbp's detection of various problems via patch hierarchies in
 
     ./dbp apply -f testdata/long_loop
     ./dbp apply -f testdata/short_loop
+    ./dbp apply -f testdata/shortest_loop
+    ./dbp apply -f testdata/dupe_id
+    ./dbp apply -f testdata/missing_id_1
+    ./dbp apply -f testdata/missing_id_2
+
