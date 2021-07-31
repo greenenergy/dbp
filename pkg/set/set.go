@@ -49,8 +49,9 @@ func (s *Set) Add(keys ...string) error {
 		s.init = true
 	}
 	for _, key := range keys {
+		fmt.Println("Checking key:", key)
 		if _, ok := s.contents[key]; ok {
-			return fmt.Errorf("key exists")
+			return fmt.Errorf("key %q exists", key)
 		}
 		s.contents[key] = true
 	}
@@ -59,7 +60,12 @@ func (s *Set) Add(keys ...string) error {
 
 func (s *Set) Union(s2 *Set) error {
 	for key := range s2.contents {
-		s.Add(key)
+		if !s.Contains(key) {
+			err := s.Add(key)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
