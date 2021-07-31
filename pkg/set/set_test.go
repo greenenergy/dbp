@@ -30,4 +30,8 @@ func TestUnion(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+
+	if s1.Len() != s2.Len() {
+		t.Fatalf("wrong set length. Should be %d, was %d", s2.Len(), s1.Len())
+	}
 }
