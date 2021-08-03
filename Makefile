@@ -10,7 +10,7 @@ GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
 
 empty:
 	@echo "Make targets:"
-	@echo "make dbp"
+	@echo "make $(PROG)"
 	@echo "make clean"
 	@echo "make install"
 
