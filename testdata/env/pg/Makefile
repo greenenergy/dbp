@@ -5,6 +5,7 @@ all:
 	@echo "make start - start postgres test environment. Make sure you 'make docker' first"
 	@echo "make install - install patches, after 'make start'"
 	@echo "make stop - stop postgres test environment"
+	@echo "make clean - remove all trace of the pg db. Otherwise it survives docker-compose restarts"
 
 .PHONY: docker
 docker:
@@ -20,3 +21,6 @@ install:
 
 stop:
 	docker-compose down
+
+clean:
+	rm -rf data
