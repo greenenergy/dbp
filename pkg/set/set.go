@@ -49,7 +49,6 @@ func (s *Set) Add(keys ...string) error {
 		s.init = true
 	}
 	for _, key := range keys {
-		fmt.Println("Checking key:", key)
 		if _, ok := s.contents[key]; ok {
 			return fmt.Errorf("key %q exists", key)
 		}

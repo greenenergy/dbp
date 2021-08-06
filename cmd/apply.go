@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/greenenergy/dbp/pkg/patcher"
 	"github.com/spf13/cobra"
@@ -48,6 +49,7 @@ are free to use them however you wish to organize your data.`,
 		err = p.Process()
 		if err != nil {
 			fmt.Println("Problem applying patches:", err.Error())
+			os.Exit(1)
 		}
 	},
 }
