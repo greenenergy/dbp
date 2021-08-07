@@ -28,6 +28,7 @@ import (
 	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/greenenergy/dbp/pkg/set"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq" // This  is the postgres driver for sqlx
 )
 
@@ -155,7 +156,15 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	_, err = tx.Query(string(ptch.Body))
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
+		switch e := err.(type) {
+		case *pq.Error:
+			//tmp, _ := json.MarshalIndent(err.(*pq.Error), "", "    ")
+			//fmt.Println(string(tmp))
+			return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
+		default:
+			return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
+		}
+
 	}
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
