@@ -21,33 +21,34 @@ import "fmt"
 // --------------------------
 
 type Set struct {
-	init     bool
-	contents map[string]bool
+	initialized bool
+	contents    map[string]bool
+}
+
+func (s *Set) init() {
+	if !s.initialized {
+		s.contents = make(map[string]bool)
+		s.initialized = true
+	}
 }
 
 func NewSet() *Set {
 	return &Set{
-		init:     true,
-		contents: make(map[string]bool),
+		initialized: true,
+		contents:    make(map[string]bool),
 	}
 }
 func (s *Set) Len() int {
 	return len(s.contents)
 }
 func (s *Set) Contains(key string) bool {
-	if !s.init {
-		s.contents = make(map[string]bool)
-		s.init = true
-	}
+	s.init()
 	_, ok := s.contents[key]
 	return ok
 }
 
 func (s *Set) Add(keys ...string) error {
-	if !s.init {
-		s.contents = make(map[string]bool)
-		s.init = true
-	}
+	s.init()
 	for _, key := range keys {
 		if _, ok := s.contents[key]; ok {
 			return fmt.Errorf("key %q exists", key)
@@ -58,6 +59,7 @@ func (s *Set) Add(keys ...string) error {
 }
 
 func (s *Set) Union(s2 *Set) error {
+	s.init()
 	for key := range s2.contents {
 		if !s.Contains(key) {
 			err := s.Add(key)

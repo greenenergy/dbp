@@ -53,6 +53,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("dbcreds", "z", "", "Name of db credentials file")
 	rootCmd.PersistentFlags().BoolP("dry", "", false, "dry run")
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable debug log")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose mode")
 
 }
 
