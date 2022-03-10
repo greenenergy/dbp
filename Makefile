@@ -25,4 +25,10 @@ install:
 clean:
 	@rm -f $(PROG)
 
+docker:
+	docker build . -t livewireholdings/dbp:$(GIT_VERSION)
+
+docker-push:
+	docker push livewireholdings/dbp:$(GIT_VERSION)
+
 
