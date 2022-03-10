@@ -58,4 +58,11 @@ func init() {
 	rootCmd.AddCommand(applyCmd)
 	applyCmd.Flags().StringP("folder", "f", "", "set the processing folder")
 	applyCmd.Flags().BoolP("verbose", "v", false, "be verbose")
+	applyCmd.Flags().StringP("db.host", "", "", "hostname of db server")
+	applyCmd.Flags().IntP("db.port", "", 5432, "Port to connect to")
+	applyCmd.Flags().StringP("db.username", "", "", "Username to use for db")
+	applyCmd.Flags().StringP("db.password", "", "", "Password to use for db")
+	applyCmd.Flags().StringP("db.name", "", "", "database name")
+	applyCmd.Flags().BoolP("db.tls", "", false, "Use TLS connection")
+
 }

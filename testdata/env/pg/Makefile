@@ -17,7 +17,13 @@ start:
 
 .PHONY: install
 install:
-	../../../dbp apply -e postgres -z dbcreds.json -f patches -v
+	../../../dbp apply -e postgres \
+	--db.host="localhost" \
+	--db.port=5432 \
+	--db.name="patchtest" \
+	--db.username="pgpatcher" \
+	--db.password="badpassword" \
+	-f patches -v
 
 stop:
 	docker-compose down

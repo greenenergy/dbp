@@ -17,9 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package dbe
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"strings"
@@ -45,23 +43,31 @@ type PGArgs struct {
 	Password string `json:"password"`
 }
 
-func NewPGDBE(credsName string, verbose bool) (DBEngine, error) {
+func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose bool) (DBEngine, error) {
 
-	var pgargs PGArgs
-	data, err := ioutil.ReadFile(credsName)
-	if err != nil {
-		return nil, err
-	}
+	/*
+		var pgargs PGArgs
+		data, err := ioutil.ReadFile(credsName)
+		if err != nil {
+			return nil, err
+		}
 
-	err = json.Unmarshal(data, &pgargs)
-	if err != nil {
-		return nil, err
-	}
+		err = json.Unmarshal(data, &pgargs)
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	mode := "disable"
+	if sslmode {
+		mode = "enable"
+	}
 
 	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
-		pgargs.Host, pgargs.Port, pgargs.Username, pgargs.Name, mode, pgargs.Password)
+		host, port, user, dbname, mode, password)
+	//	pgargs.Host, pgargs.Port, pgargs.Username, pgargs.Name, mode, pgargs.Password)
+
+	fmt.Println("connstr:", connStr)
 
 	conn, err := sqlx.Open("postgres", connStr)
 	if err != nil {
@@ -100,8 +106,6 @@ func (p *PGDBE) checkInstall() error {
 				fmt.Println("this is a network error, gonna retry:", err.Error())
 				time.Sleep(time.Second)
 			} else {
-				//fmt.Printf("Got an error trying to see if I am alread installed")
-				//log.Fatal(err.Error())
 				_, err = p.conn.Queryx(`
 create table dbp_patch_table (
 	id text primary key,
@@ -158,8 +162,6 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		tx.Rollback()
 		switch e := err.(type) {
 		case *pq.Error:
-			//tmp, _ := json.MarshalIndent(err.(*pq.Error), "", "    ")
-			//fmt.Println(string(tmp))
 			return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 		default:
 			return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())

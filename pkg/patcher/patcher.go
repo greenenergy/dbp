@@ -73,13 +73,42 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 
 		verbose = flags.Lookup("verbose").Value.String() == "true"
 	}
+	host, err := flags.GetString("db.host")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
+	port, err := flags.GetInt("db.port")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
+	username, err := flags.GetString("db.username")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
+	password, err := flags.GetString("db.password")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
+	dbname, err := flags.GetString("db.name")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
+	sslmode, err := flags.GetBool("db.tls")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
 
 	switch enginename {
 	case "":
 		engine = dbe.NewMockDBE(flags)
 
 	case "postgres":
-		engine, err = dbe.NewPGDBE(credsName, verbose)
+		engine, err = dbe.NewPGDBE(host, port, username, password, dbname, sslmode, verbose)
 		if err != nil {
 			return nil, err
 		}
