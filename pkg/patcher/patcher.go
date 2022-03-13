@@ -305,7 +305,7 @@ func (p *Patcher) Process() error {
 
 	// Make sure to apply the init_patch.sql file first
 	if ids.Len() == 0 {
-
+		fmt.Println("no IDs detected, patcher not installed yet")
 		if p.verbose || p.dry {
 			fmt.Printf("applying: (weight %d) %s\n", p.initPatch.Weight, p.initPatch.Filename)
 		}
@@ -335,6 +335,8 @@ func (p *Patcher) Process() error {
 	}
 	if numDone > 0 {
 		fmt.Printf("Applied %d patches\n", numDone)
+	} else {
+		fmt.Println("No work to do")
 	}
 
 	return nil

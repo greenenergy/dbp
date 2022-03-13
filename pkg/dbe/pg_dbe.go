@@ -67,7 +67,9 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 		host, port, user, dbname, mode, password)
 	//	pgargs.Host, pgargs.Port, pgargs.Username, pgargs.Name, mode, pgargs.Password)
 
-	fmt.Println("connstr:", connStr)
+	if verbose {
+		fmt.Println("connstr:", connStr)
+	}
 
 	conn, err := sqlx.Open("postgres", connStr)
 	if err != nil {
@@ -103,7 +105,7 @@ func (p *PGDBE) checkInstall() error {
 		_, err := p.conn.Queryx("select count(*) from dbp_patch_table")
 		if err != nil {
 			if _, ok := err.(*net.OpError); ok {
-				fmt.Println("this is a network error, gonna retry:", err.Error())
+				fmt.Printf("this is a network error(%q), retrying %d more times\n", err.Error(), retries-x)
 				time.Sleep(time.Second)
 			} else {
 				_, err = p.conn.Queryx(`

@@ -21,8 +21,8 @@ install:
 	--db.host="localhost" \
 	--db.port=5432 \
 	--db.name="patchtest" \
-	--db.username="pgpatcher" \
-	--db.password="badpassword" \
+	--db.username="pgpatchery" \
+	--db.password="badpasswordx" \
 	-f patches -v
 
 stop:
