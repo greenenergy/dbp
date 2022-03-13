@@ -15,7 +15,8 @@ empty:
 	@echo "make install"
 
 $(PROG): $(SRC) #api/server/tm.pb.go
-	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
+	CGO_ENABLED=0 GOOS=linux go build -v -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o $(PROG)
+#	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
 
 .PHONY: install
 install:
