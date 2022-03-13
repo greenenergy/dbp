@@ -21,9 +21,9 @@ install:
 	--db.host="localhost" \
 	--db.port=5432 \
 	--db.name="patchtest" \
-	--db.username="pgpatchery" \
+	--db.username="pgpatcher" \
 	--db.password="badpasswordx" \
-	-f patches -v
+	-f patches -v -d
 
 stop:
 	docker-compose down

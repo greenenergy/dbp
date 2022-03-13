@@ -73,6 +73,11 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 
 		verbose = flags.Lookup("verbose").Value.String() == "true"
 	}
+	debug, err := flags.GetBool("debug")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
 	host, err := flags.GetString("db.host")
 	if err != nil {
 		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
@@ -108,7 +113,7 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 		engine = dbe.NewMockDBE(flags)
 
 	case "postgres":
-		engine, err = dbe.NewPGDBE(host, port, username, password, dbname, sslmode, verbose)
+		engine, err = dbe.NewPGDBE(host, port, username, password, dbname, sslmode, verbose, debug)
 		if err != nil {
 			return nil, err
 		}

@@ -33,6 +33,7 @@ import (
 type PGDBE struct {
 	conn    *sqlx.DB
 	verbose bool
+	debug   bool
 }
 
 type PGArgs struct {
@@ -43,7 +44,7 @@ type PGArgs struct {
 	Password string `json:"password"`
 }
 
-func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose bool) (DBEngine, error) {
+func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool) (DBEngine, error) {
 
 	/*
 		var pgargs PGArgs
@@ -87,6 +88,7 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 	pgdbe := PGDBE{
 		conn:    conn,
 		verbose: verbose,
+		debug:   debug,
 	}
 
 	err = pgdbe.checkInstall()
@@ -152,12 +154,21 @@ func (p *PGDBE) GetInstalledIDs() (*set.Set, error) {
 	return &output, nil
 }
 
+func (p *PGDBE) DPrint(msg string) {
+	if p.debug {
+		fmt.Println(msg)
+	}
+}
+
 func (p *PGDBE) Patch(ptch *patch.Patch) error {
+	p.DPrint("Patch -1-")
+	defer p.DPrint("Patch -exiting-")
 
 	tx, err := p.conn.Begin()
 	if err != nil {
 		return fmt.Errorf("problem while trying to apply patch: %s", err.Error())
 	}
+	p.DPrint("Patch -2-")
 
 	_, err = tx.Query(string(ptch.Body))
 	if err != nil {
@@ -170,6 +181,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		}
 
 	}
+	p.DPrint("Patch -3-")
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
 	_, err = tx.Query("insert into dbp_patch_table(id, prereqs, description) values ($1, $2, $3)",
@@ -179,7 +191,11 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		tx.Rollback()
 		return fmt.Errorf("problem updating patch record %s: %s", ptch.Id, err.Error())
 	}
+	p.DPrint("Patch -4-")
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("*** Problem committing:", err.Error())
+	}
 	return nil
 }
