@@ -169,6 +169,9 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		tx.Rollback()
 		switch e := err.(type) {
 		case *pq.Error:
+			if p.debug {
+				fmt.Println("Problem patch:", string(ptch.Body))
+			}
 			return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 		default:
 			return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
