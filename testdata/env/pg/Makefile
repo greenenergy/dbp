@@ -22,7 +22,6 @@ install:
 	--db.port=5432 \
 	--db.name="patchtest" \
 	--db.username="pgpatcher" \
-	--db.password="badpasswordx" \
 	-f patches -v -d \
 	-r 100
 

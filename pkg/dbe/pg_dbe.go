@@ -46,20 +46,6 @@ type PGArgs struct {
 }
 
 func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
-
-	/*
-		var pgargs PGArgs
-		data, err := ioutil.ReadFile(credsName)
-		if err != nil {
-			return nil, err
-		}
-
-		err = json.Unmarshal(data, &pgargs)
-		if err != nil {
-			return nil, err
-		}
-	*/
-
 	mode := "disable"
 	if sslmode {
 		mode = "enable"
@@ -104,13 +90,19 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 func (p *PGDBE) checkInstall() error {
 	success := false
 
+	p.DPrint("checkInstal()...")
+
 	for x := 0; x < p.retries; x++ {
+		p.DPrint("querying dbp_patch_table...")
+
 		_, err := p.conn.Queryx("select count(*) from dbp_patch_table")
 		if err != nil {
 			if _, ok := err.(*net.OpError); ok {
 				fmt.Printf("this is a network error(%q), retrying %d more times\n", err.Error(), p.retries-x)
 				time.Sleep(time.Second)
 			} else {
+				p.DPrint("creating dbp_patch_table...")
+
 				_, err = p.conn.Queryx(`
 create table dbp_patch_table (
 	id text primary key,
@@ -122,10 +114,11 @@ create table dbp_patch_table (
 				if err != nil {
 					return fmt.Errorf("problem creating patch table:%q", err)
 				}
-
+				break
 			}
 		} else {
 			success = true
+			break
 		}
 	}
 	if !success {
