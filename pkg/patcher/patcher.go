@@ -108,12 +108,17 @@ func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
 		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
 	}
 
+	retries, err := flags.GetInt("retries")
+	if err != nil {
+		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
+	}
+
 	switch enginename {
 	case "":
 		engine = dbe.NewMockDBE(flags)
 
 	case "postgres":
-		engine, err = dbe.NewPGDBE(host, port, username, password, dbname, sslmode, verbose, debug)
+		engine, err = dbe.NewPGDBE(host, port, username, password, dbname, sslmode, verbose, debug, retries)
 		if err != nil {
 			return nil, err
 		}

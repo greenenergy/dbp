@@ -34,6 +34,7 @@ type PGDBE struct {
 	conn    *sqlx.DB
 	verbose bool
 	debug   bool
+	retries int
 }
 
 type PGArgs struct {
@@ -44,7 +45,7 @@ type PGArgs struct {
 	Password string `json:"password"`
 }
 
-func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool) (DBEngine, error) {
+func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 
 	/*
 		var pgargs PGArgs
@@ -101,13 +102,12 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 
 func (p *PGDBE) checkInstall() error {
 	success := false
-	retries := 10
 
-	for x := 0; x < retries; x++ {
+	for x := 0; x < p.retries; x++ {
 		_, err := p.conn.Queryx("select count(*) from dbp_patch_table")
 		if err != nil {
 			if _, ok := err.(*net.OpError); ok {
-				fmt.Printf("this is a network error(%q), retrying %d more times\n", err.Error(), retries-x)
+				fmt.Printf("this is a network error(%q), retrying %d more times\n", err.Error(), p.retries-x)
 				time.Sleep(time.Second)
 			} else {
 				_, err = p.conn.Queryx(`

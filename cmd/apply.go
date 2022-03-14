@@ -64,5 +64,5 @@ func init() {
 	applyCmd.Flags().StringP("db.password", "", "", "Password to use for db")
 	applyCmd.Flags().StringP("db.name", "", "", "database name")
 	applyCmd.Flags().BoolP("db.tls", "", false, "Use TLS connection")
-
+	applyCmd.Flags().IntP("retries", "r", 10, "Number of retries when trying to connect")
 }
