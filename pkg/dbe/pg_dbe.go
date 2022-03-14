@@ -90,6 +90,7 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 		conn:    conn,
 		verbose: verbose,
 		debug:   debug,
+		retries: retries,
 	}
 
 	err = pgdbe.checkInstall()

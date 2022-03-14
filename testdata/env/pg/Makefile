@@ -23,7 +23,8 @@ install:
 	--db.name="patchtest" \
 	--db.username="pgpatcher" \
 	--db.password="badpasswordx" \
-	-f patches -v -d
+	-f patches -v -d \
+	-r 100
 
 stop:
 	docker-compose down
