@@ -23,3 +23,18 @@ You can demonstrate dbp's detection of various problems via patch hierarchies in
     ./dbp apply -f testdata/missing_id_1
     ./dbp apply -f testdata/missing_id_2
 
+## Why This Patcher?
+
+The current tool we're using ("Migrate") has inadequate design features, IMHO:
+* It does not use a transaction to wrap both the patch being applied and the update to the migration management table that records the patch was applied. In fact it apparently doesn't use a built in transaction at all for the patch, so it's up to the patch author to wrap their patch in BEGIN/END. If they don't, presumably you can end up with partial changes to the database if something goes wrong.
+* It demands that authors write "up" and "down" (apply/rollback) versions of their patches - even though you can't always roll back. If a patch deleted records, or dropped a table, how would you "down" that? You can't - you'd have to roll the database back to a prior snapshot. The only safe way to undo a patch is to use snapshotting. Creating a "down" file provides an artificial sense of security.
+* It uses filenames to order operations - which can be complicated if you have two (or more) developers working on patches in separate project branches. The standard method appears to be to prefix your filename with a number, indicating what order it will get applied in. (Is the number even parsed AS a number by the ordering system? If they just use alphabetic sorting, then 1_ and 11_ will sort back to back, and they shouldn't). WHat happens if two people come up with the same filename? Or at least the same prefix number - which is supposed to come first?
+* It forces all patches to be in one directory, so you can't, for example, have a folder of bug fixes and a folder of features.
+* Since a patch may have its UP and/or DOWN scripts applied, how do you know what state a given database is supposed to be in? If you applied EVERY patch in the system, you would have an empty database.
+
+DBP, on the other hand, does things differently:
+* Each patch, and the update to the management table happens within a transaction. Either the whole patch plus the mgment update happens, or neither happens.
+* Only "forward" patches are required - you build the patches that are supposed to bring the database to the "current" state. If you need to undo a previous patch, you write another patch that has the previous one as a prereq, and you write the reversal. You only do this if you actually need to undo the previous patch to have the db in a correct state.
+* Filenames don't matter. A comment header in each patch file contains an ID (which can be any string wtihout commas in it) and a prereq line listing all the prereuisite patches that should be applied before this patch is applied. This allows complex and sophisticated ordering to be managed, if need be. The prereq field can be ignored if order doesn't matter. One file with the filename "init_patch.sql" will be considered the starting point, everything else is ID based.
+* A directory is passed as the starting point, and the whole tree is walked and the map of files and relationships is built from there.
+* All patches are applied when the patcher is run, and the system is idempotent, so re-patching an existing system will have no effect unless there are new patches involved.
