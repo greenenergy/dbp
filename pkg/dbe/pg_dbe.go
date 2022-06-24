@@ -53,10 +53,12 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 
 	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
 		host, port, user, dbname, mode, password)
-	//	pgargs.Host, pgargs.Port, pgargs.Username, pgargs.Name, mode, pgargs.Password)
+
+	safeConnStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=<redacted>",
+		host, port, user, dbname, mode)
 
 	if verbose {
-		fmt.Println("connstr:", connStr)
+		fmt.Println("connstr:", safeConnStr)
 	}
 
 	conn, err := sqlx.Open("postgres", connStr)
