@@ -10,5 +10,5 @@ testdata/*
 !testdata/shortest_loop
 testdata/env/pg/data
 testdata/env/sqlite/test.db
-
+.vscode
 

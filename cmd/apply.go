@@ -44,7 +44,7 @@ are free to use them however you wish to organize your data.`,
 		err = p.Scan(folder)
 		if err != nil {
 			fmt.Println("error scanning:", err)
-			return
+			os.Exit(1)
 		}
 		err = p.Process()
 		if err != nil {
