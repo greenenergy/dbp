@@ -22,6 +22,7 @@ install:
 	--db.port=5432 \
 	--db.name="patchtest" \
 	--db.username="pgpatcher" \
+	--db.tls=true \
 	-f patches -v -d \
 	-r 100
 

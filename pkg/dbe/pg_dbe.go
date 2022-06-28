@@ -48,7 +48,7 @@ type PGArgs struct {
 func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 	mode := "disable"
 	if sslmode {
-		mode = "enable"
+		mode = "require"
 	}
 
 	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
