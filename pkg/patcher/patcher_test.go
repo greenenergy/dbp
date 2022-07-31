@@ -36,40 +36,39 @@ func TestPatcher(t *testing.T) {
 		err    error
 	}{
 		{
-			"testdata/dupe_id",
-			fmt.Errorf(`duplicate id: fece2b8e-cf43-11eb-b7f3-07af1b70a47a, found in File "testdata/dupe_id/init_patch.sql" and "testdata/dupe_id/patch_1.sql"`),
+			"testdata/bad/dupe_id",
+			fmt.Errorf(`duplicate id: fece2b8e-cf43-11eb-b7f3-07af1b70a47a, found in File "testdata/bad/dupe_id/init_patch.sql" and "testdata/bad/dupe_id/patch_1.sql"`),
 		},
 		{
-			"testdata/long_loop",
+			"testdata/bad/long_loop",
 			fmt.Errorf("loop detected:\n" +
-				"testdata/long_loop/loop_a.sql\n" +
-				"testdata/long_loop/loop_c.sql\n" +
-				"testdata/long_loop/loop_f.sql\n" +
-				"testdata/long_loop/loop_g.sql"),
+				"testdata/bad/long_loop/loop_a.sql\n" +
+				"testdata/bad/long_loop/loop_c.sql\n" +
+				"testdata/bad/long_loop/loop_f.sql\n" +
+				"testdata/bad/long_loop/loop_g.sql"),
 		},
 		{
-			"testdata/missing_id_1",
-			fmt.Errorf(`file "testdata/missing_id_1/init_patch.sql" missing ID field`),
+			"testdata/bad/missing_id_1",
+			fmt.Errorf(`file "testdata/bad/missing_id_1/init_patch.sql" missing ID field`),
 		},
 		{
-			"testdata/missing_id_2",
-			fmt.Errorf(`bad ID reference. File "testdata/missing_id_2/a.sql" refers to id "this-is-not-a-valid-id" which doesn't exist`),
+			"testdata/bad/missing_id_2",
+			fmt.Errorf(`bad ID reference. File "testdata/bad/missing_id_2/a.sql" refers to id "this-is-not-a-valid-id" which doesn't exist`),
 		},
 		{
-			"testdata/shortest_loop",
+			"testdata/bad/shortest_loop",
 			fmt.Errorf("loop detected:\n" +
-				"testdata/shortest_loop/init_patch.sql"),
+				"testdata/bad/shortest_loop/init_patch.sql"),
 		},
 		{
-			"testdata/short_loop",
+			"testdata/bad/short_loop",
 			fmt.Errorf("loop detected:\n" +
-				"testdata/short_loop/feat_abcd.sql\n" +
-				"testdata/short_loop/feat_efg.sql"),
+				"testdata/bad/short_loop/feat_abcd.sql\n" +
+				"testdata/bad/short_loop/feat_efg.sql"),
 		},
 	}
 
 	for _, c := range errorCases {
-		fmt.Println("Scanning:", c.folder)
 		p.Reset()
 		err = p.Scan(c.folder)
 		if err != nil {
@@ -78,6 +77,19 @@ func TestPatcher(t *testing.T) {
 			} else if err.Error() != c.err.Error() {
 				t.Errorf("error scanning. Expected:\n%v\ngot:\n%v", c.err, err)
 			}
+		}
+	}
+
+	successCases := []string{"testdata/good/patchset_1"}
+	for _, c := range successCases {
+		p.Reset()
+		err = p.Scan(c)
+		if err != nil {
+			t.Errorf("error scanning: %v", err)
+		}
+		err = p.Process()
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
