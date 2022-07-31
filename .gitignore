@@ -11,4 +11,4 @@ testdata/*
 testdata/env/pg/data
 testdata/env/sqlite/test.db
 .vscode
-
+coverage.out

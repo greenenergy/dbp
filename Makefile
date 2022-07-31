@@ -32,4 +32,9 @@ docker:
 docker-push:
 	docker push livewireholdings/dbp:$(GIT_VERSION)
 
+test:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
 
+test-html: test
+	go tool cover -html=coverage.out
