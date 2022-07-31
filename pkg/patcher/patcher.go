@@ -63,6 +63,12 @@ func NewPatcher(dry, verbose bool, engine dbe.DBEngine) (*Patcher, error) {
 	}, nil
 }
 
+func (p *Patcher) Reset() {
+	p.ordered = []*patch.Patch{}
+	p.patches = make(map[string]*patch.Patch)
+	p.initPatch = nil
+}
+
 func (p *Patcher) String() string {
 	dummy, _ := json.MarshalIndent(p.ordered, "", "    ")
 	return string(dummy)
@@ -141,6 +147,7 @@ func (p *Patcher) bumpWeight(thepatch *patch.Patch, detectionMap map[string]*pat
 		for key := range detectionMap {
 			filenames = append(filenames, p.patches[key].Filename)
 		}
+		sort.Strings(filenames)
 		return fmt.Errorf("loop detected:\n%s", strings.Join(filenames, "\n"))
 	}
 
