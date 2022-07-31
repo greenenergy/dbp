@@ -25,3 +25,15 @@ type DBEngine interface {
 	GetInstalledIDs() (*set.Set, error) // Return the IDs of patches that have already been installed
 	Patch(*patch.Patch) error
 }
+
+type EngineArgs struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Name     string `json:"dbname"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	SSL      bool   `json:"ssl"`
+	Debug    bool   `json:"debug"`
+	Verbose  bool   `json:"verbose"`
+	Retries  int    `json:"retries"`
+}

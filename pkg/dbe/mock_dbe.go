@@ -21,13 +21,12 @@ import (
 
 	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/greenenergy/dbp/pkg/set"
-	"github.com/spf13/pflag"
 )
 
 type MockDBE struct {
 }
 
-func NewMockDBE(flags *pflag.FlagSet) DBEngine {
+func NewMockDBE() DBEngine {
 	return &MockDBE{}
 }
 

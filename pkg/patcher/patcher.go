@@ -54,82 +54,7 @@ func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
 	return "", fmt.Errorf("flag not found")
 }
 
-func NewPatcher(flags *pflag.FlagSet) (*Patcher, error) {
-	dry := false
-	verbose := false
-	var enginename string
-	var credsName string
-	var engine dbe.DBEngine
-	var err error
-
-	if flags != nil {
-		dry = flags.Lookup("dry").Value.String() == "true"
-		enginename = flags.Lookup("engine").Value.String()
-
-		tmp, err := GetFlagString("dbcreds", flags)
-		if err == nil {
-			credsName = tmp
-		}
-
-		verbose = flags.Lookup("verbose").Value.String() == "true"
-	}
-	debug, err := flags.GetBool("debug")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	host, err := flags.GetString("db.host")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	port, err := flags.GetInt("db.port")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	username, err := flags.GetString("db.username")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	password, err := flags.GetString("db.password")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	dbname, err := flags.GetString("db.name")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	sslmode, err := flags.GetBool("db.tls")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	retries, err := flags.GetInt("retries")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
-	switch enginename {
-	case "":
-		engine = dbe.NewMockDBE(flags)
-
-	case "postgres":
-		engine, err = dbe.NewPGDBE(host, port, username, password, dbname, sslmode, verbose, debug, retries)
-		if err != nil {
-			return nil, err
-		}
-
-	case "sqlite":
-		engine, err = dbe.NewSQLiteDBE(credsName, verbose)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func NewPatcher(dry, verbose bool, engine dbe.DBEngine) (*Patcher, error) {
 	return &Patcher{
 		dry:     dry,
 		verbose: verbose,
@@ -314,7 +239,7 @@ func (p *Patcher) Process() error {
 	numDone := 0
 
 	// Make sure to apply the init_patch.sql file first
-	if ids.Len() == 0 {
+	if ids.Len() == 0 && !p.dry {
 		fmt.Println("no IDs detected, patcher not installed yet")
 		if p.verbose || p.dry {
 			fmt.Printf("applying: (weight %d) %s\n", p.initPatch.Weight, p.initPatch.Filename)

@@ -21,7 +21,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/greenenergy/dbp/pkg/dbe"
 	"github.com/greenenergy/dbp/pkg/patcher"
+	"github.com/greenenergy/dbp/pkg/util"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +38,40 @@ are free to use them however you wish to organize your data.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := cmd.Flags().Lookup("folder").Value.String()
 
-		p, err := patcher.NewPatcher(cmd.Flags())
+		flagargs, err := util.FlagsToArgs(cmd.Flags())
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		var engine dbe.DBEngine
+
+		engineName := cmd.Flags().Lookup("engine").Value.String()
+		switch engineName {
+		case "postgres":
+			engine, err = dbe.NewPGDBE(flagargs)
+			if err != nil {
+				log.Fatal(err)
+			}
+		case "sqlite":
+			engine, err = dbe.NewPGDBE(flagargs)
+			if err != nil {
+				log.Fatal(err)
+			}
+		default:
+			engine = dbe.NewMockDBE()
+		}
+
+		dry, err := cmd.Flags().GetBool("dry")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		p, err := patcher.NewPatcher(dry, verbose, engine)
 		if err != nil {
 			log.Fatal(err)
 		}

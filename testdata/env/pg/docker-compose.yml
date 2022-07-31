@@ -1,21 +1,42 @@
 version: "3.3"
 services:
-    postgres:
-        image: postgres:12.3
-        ports:
-            - "5432:5432"
-        expose:
-            - "5432"
-        volumes:
-            - /etc/timezone:/etc/timezone:ro
-            - /etc/localtime:/etc/localtime:ro
-            - /etc/passwd:/etc/passwd:ro
-            - ./data/pgdata:/var/lib/postgresql/data
-              #- ./testdata/files:/files
-              #- ./schema.sql:/schema.sql:ro
-              #- ./postgresql.conf:/etc/postgresql/postgresql.conf
-              #- ./resetdb.sh:/resetdb.sh
-        user: ${CURRENT_UID}
-    postgres-setup:
-        image: postgres-setup
-
+  postgres:
+    image: postgres:12.3
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5434:5434"
+    expose:
+      - "5434"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/passwd:/etc/passwd:ro
+      - ./data/pgdata:/var/lib/postgresql/data
+        #- ./testdata/files:/files
+        #- ./schema.sql:/schema.sql:ro
+        #- ./postgresql.conf:/etc/postgresql/postgresql.conf
+        #- ./resetdb.sh:/resetdb.sh
+    user: ${CURRENT_UID}
+  postgres-setup:
+    image: postgres-setup
+    depends_on:
+      - postgres
+    command:
+      - dbp
+      - apply
+      - -e
+      - postgres
+      - -f
+      - /patches
+      - --db.name=patchtest
+      - --db.host=localhost
+      - --db.port=5434
+      - --db.username=postgres
+      - --db.password=postgres
+      - --db.tls=true
+      - -v
+      - -d
+      - -r
+      - "120"

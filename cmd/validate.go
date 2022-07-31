@@ -19,7 +19,9 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/greenenergy/dbp/pkg/dbe"
 	"github.com/greenenergy/dbp/pkg/patcher"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +36,14 @@ an ID that doesn't exist, etc`,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := cmd.Flags().Lookup("folder").Value.String()
 
-		p, err := patcher.NewPatcher(cmd.Flags())
+		engine := dbe.NewMockDBE()
+
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		p, err := patcher.NewPatcher(false, verbose, engine)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -43,8 +52,8 @@ an ID that doesn't exist, etc`,
 		err = p.Scan(folder)
 		if err != nil {
 			fmt.Println("error scanning:", err)
+			os.Exit(-1)
 		}
-		p.Process()
 	},
 }
 

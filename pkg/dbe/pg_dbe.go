@@ -45,19 +45,20 @@ type PGArgs struct {
 	Password string `json:"password"`
 }
 
-func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
+//func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
+func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 	mode := "disable"
-	if sslmode {
+	if args.SSL {
 		mode = "require"
 	}
 
 	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
-		host, port, user, dbname, mode, password)
+		args.Host, args.Port, args.Username, args.Name, mode, args.Password)
 
 	safeConnStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=<redacted>",
-		host, port, user, dbname, mode)
+		args.Host, args.Port, args.Username, args.Name, mode)
 
-	if verbose {
+	if args.Verbose {
 		fmt.Println("connstr:", safeConnStr)
 	}
 
@@ -76,9 +77,9 @@ func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool
 
 	pgdbe := PGDBE{
 		conn:    conn,
-		verbose: verbose,
-		debug:   debug,
-		retries: retries,
+		verbose: args.Verbose,
+		debug:   args.Debug,
+		retries: args.Retries,
 	}
 
 	err = pgdbe.checkInstall()
