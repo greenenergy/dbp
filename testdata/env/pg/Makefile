@@ -19,9 +19,10 @@ start:
 install:
 	../../../dbp apply -e postgres \
 	--db.host="localhost" \
-	--db.port=5432 \
+	--db.port=5434 \
 	--db.name="patchtest" \
-	--db.username="pgpatcher" \
+	--db.username="postgres" \
+	--db.password="postgres" \
 	--db.tls=true \
 	-f patches -v -d \
 	-r 100
