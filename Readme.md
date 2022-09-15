@@ -11,6 +11,28 @@ This patching system is designed for "forward" patching only - as in, there is n
 You can launch with "--dry" which will set dbp into `dry run` mode, where it will tell you what work it will do without actually doing anything. This also allows you to check for potential problems with IDs and prereqs.
 
 Each patch file is executed in its own transaction, and the id is appended to a dbp private table in the same transaction. If there is a problem, then the transaction is rolled back and neither the patch nor the update remains. 
+## Usage
+At the top of each patch file, you need to add two comment lines:
+    
+        -- id: <id>
+        -- prereqs: <id>,<id>,<id>...
+
+The id can be any string without spaces.
+The prereqs line is a comma separated list of patches that need to be applied before this one. The prereqs refer to the id field of the other patches, so it makes sense to use filenames for the ids. I usually use the filename without the .sql extension, ie:
+
+File1, bugfix_1234.sql:
+        
+            -- id: bugfix_1234
+            -- prereqs:
+            ...sql here...
+
+File2, bugfix_2468.sql:
+        
+            -- id: bugfix_2468
+            -- prereqs: bugfix_1234 
+            ...sql here...
+
+dbp will make sure that File2 is applied after File1.
 
 ## Testing
 
