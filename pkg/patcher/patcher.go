@@ -265,7 +265,11 @@ func (p *Patcher) Process() error {
 			continue
 		}
 		if p.verbose || p.dry {
-			fmt.Printf("applying: (weight %d) %s\n", thepatch.Weight, thepatch.Filename)
+			extra := ""
+			if p.dry {
+				extra = " [dry]"
+			}
+			fmt.Printf("applying: (weight %d) %s%s\n", thepatch.Weight, thepatch.Filename, extra)
 		}
 
 		if !p.dry {
@@ -276,7 +280,11 @@ func (p *Patcher) Process() error {
 		numDone += 1
 	}
 	if numDone > 0 {
-		fmt.Printf("Applied %d patches\n", numDone)
+		patchstr := "patches"
+		if numDone == 1 {
+			patchstr = "patch"
+		}
+		fmt.Printf("Applied %d %s successfully\n", numDone, patchstr)
 	} else {
 		fmt.Println("No work to do")
 	}

@@ -27,7 +27,7 @@ import (
 	"github.com/greenenergy/dbp/pkg/set"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	_ "github.com/lib/pq" // This  is the postgres driver for sqlx
+	//_ "github.com/lib/pq" // This  is the postgres driver for sqlx
 )
 
 type PGDBE struct {
@@ -45,7 +45,7 @@ type PGArgs struct {
 	Password string `json:"password"`
 }
 
-//func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
+// func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 	mode := "disable"
 	if args.SSL {
@@ -117,6 +117,7 @@ create table dbp_patch_table (
 				if err != nil {
 					return fmt.Errorf("problem creating patch table:%q", err)
 				}
+				success = true
 				break
 			}
 		} else {
@@ -158,14 +159,10 @@ func (p *PGDBE) DPrint(msg string) {
 }
 
 func (p *PGDBE) Patch(ptch *patch.Patch) error {
-	p.DPrint("Patch -1-")
-	defer p.DPrint("Patch -exiting-")
-
 	tx, err := p.conn.Begin()
 	if err != nil {
 		return fmt.Errorf("problem while trying to apply patch: %s", err.Error())
 	}
-	p.DPrint("Patch -2-")
 
 	_, err = tx.Query(string(ptch.Body))
 	if err != nil {
@@ -181,7 +178,6 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		}
 
 	}
-	p.DPrint("Patch -3-")
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
 	_, err = tx.Query("insert into dbp_patch_table(id, prereqs, description) values ($1, $2, $3)",
@@ -189,9 +185,11 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("problem updating patch record %s: %s", ptch.Id, err.Error())
+		if strings.Contains(err.Error(), "unexpected Parse response") {
+			return fmt.Errorf("problem updating patch record %q: %s -- Are you returning a resultset, or possibly have a commit statement?", ptch.Id, err.Error())
+		}
+		return fmt.Errorf("problem updating patch record %q: %s", ptch.Id, err.Error())
 	}
-	p.DPrint("Patch -4-")
 
 	err = tx.Commit()
 	if err != nil {
