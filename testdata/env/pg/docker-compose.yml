@@ -1,9 +1,7 @@
 version: "3.3"
 services:
   db:
-    #image: postgres:12.3
-    #image: postgres:14.5
-    image: postgres:15rc2
+    image: postgres-setup:latest
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -11,41 +9,8 @@ services:
       - "5434:5432"
     expose:
       - "5434"
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-        #- /etc/passwd:/etc/passwd:ro
-        #- ./data/pgdata:/var/lib/postgresql/data
-    #user: ${CURRENT_UID}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  postgres-setup:
-    image: postgres-setup
-    depends_on:
-      - db
-
-    command:
-      - sh
-      - run.sh
-
-#      - ./dbp
-#      - apply
-#      - -e
-#      - postgres
-#      - -f
-#      - /patches
-#      - --db.name=patchtest
-#      - --db.host=localhost
-#      - --db.port=5432
-#      - --db.username=postgres
-#      - --db.password=postgres
-#      - --db.tls=false
-#      - -v
-#      - -d
-#      - -r
-#      - "120"
-#

@@ -32,16 +32,18 @@ import (
 
 	"github.com/greenenergy/dbp/pkg/dbe"
 	"github.com/greenenergy/dbp/pkg/patch"
+	"github.com/greenenergy/dbp/pkg/set"
 	"github.com/spf13/pflag"
 )
 
 type Patcher struct {
-	initPatch *patch.Patch
-	patches   map[string]*patch.Patch
-	ordered   []*patch.Patch
-	dry       bool
-	verbose   bool
-	engine    dbe.DBEngine
+	initPatch    *patch.Patch
+	patches      map[string]*patch.Patch
+	ordered      []*patch.Patch
+	dry          bool
+	verbose      bool
+	engine       dbe.DBEngine
+	installedIDs *set.Set
 }
 
 func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
@@ -166,9 +168,18 @@ func (p *Patcher) bumpWeight(thepatch *patch.Patch, detectionMap map[string]*pat
 }
 
 func (p *Patcher) Resolve() error {
+	ids, err := p.engine.GetInstalledIDs()
+	if err != nil {
+		return err
+	}
+	p.installedIDs = ids
 	var patches []*patch.Patch
 
 	for _, thispatch := range p.patches {
+		if p.installedIDs.Contains(thispatch.Id) {
+			fmt.Println("Skipping already installed patch", thispatch.Id)
+			continue
+		}
 		patches = append(patches, thispatch)
 		detectionMap := make(map[string]*patch.Patch)
 		detectionMap[thispatch.Id] = thispatch
@@ -190,6 +201,12 @@ func (p *Patcher) Resolve() error {
 	}
 
 	sort.Sort(patch.ByWeight(patches))
+	if p.verbose {
+		fmt.Println("Patches to be applied:")
+		for _, ptch := range patches {
+			fmt.Printf("[weight %d] %s\n", ptch.Weight, ptch.Filename)
+		}
+	}
 	p.ordered = patches
 	return nil
 }
@@ -239,29 +256,28 @@ func (p *Patcher) Scan(folder string) error {
 }
 
 func (p *Patcher) Process() error {
-	ids, err := p.engine.GetInstalledIDs()
-	if err != nil {
-		return err
-	}
 	numDone := 0
 
 	// Make sure to apply the init_patch.sql file first
-	if ids.Len() == 0 && !p.dry {
+	if p.installedIDs.Len() == 0 && !p.dry {
 		fmt.Println("no IDs detected, patcher not installed yet")
 		if p.verbose || p.dry {
 			fmt.Printf("applying: (weight %d) %s\n", p.initPatch.Weight, p.initPatch.Filename)
 		}
 
-		if err = p.engine.Patch(p.initPatch); err != nil {
+		if err := p.engine.Patch(p.initPatch); err != nil {
 			return err
 		}
 		// Skip applying this in the following loop
-		ids.Add(p.initPatch.Id)
+		p.installedIDs.Add(p.initPatch.Id)
 		numDone += 1
 	}
 
 	for _, thepatch := range p.ordered {
-		if ids.Contains(thepatch.Id) {
+		if p.installedIDs.Contains(thepatch.Id) {
+			if p.verbose {
+				fmt.Printf("INSTALLED: (weight %d) %s\n", thepatch.Weight, thepatch.Filename)
+			}
 			continue
 		}
 		if p.verbose || p.dry {

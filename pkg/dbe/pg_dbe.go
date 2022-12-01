@@ -93,7 +93,7 @@ func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 func (p *PGDBE) checkInstall() error {
 	success := false
 
-	p.DPrint("checkInstal()...")
+	p.DPrint("checkInstall()...")
 
 	for x := 0; x < p.retries; x++ {
 		p.DPrint("querying dbp_patch_table...")
@@ -186,9 +186,9 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	if err != nil {
 		tx.Rollback()
 		if strings.Contains(err.Error(), "unexpected Parse response") {
-			return fmt.Errorf("problem updating patch record %q: %s -- Are you returning a resultset, or possibly have a commit statement?", ptch.Id, err.Error())
+			return fmt.Errorf("problem applying patch file %q: %s -- Are you returning a resultset, or possibly have a commit statement?", ptch.Filename, err.Error())
 		}
-		return fmt.Errorf("problem updating patch record %q: %s", ptch.Id, err.Error())
+		return fmt.Errorf("problem applying patch file %q: %s", ptch.Filename, err.Error())
 	}
 
 	err = tx.Commit()
