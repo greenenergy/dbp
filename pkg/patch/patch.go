@@ -36,5 +36,8 @@ func (by ByWeight) Swap(i, j int) {
 }
 
 func (by ByWeight) Less(i, j int) bool {
+	if by[i].Weight == by[j].Weight {
+		return by[i].Id < by[j].Id
+	}
 	return by[i].Weight > by[j].Weight
 }

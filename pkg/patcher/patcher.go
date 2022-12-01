@@ -190,6 +190,12 @@ func (p *Patcher) Resolve() error {
 	}
 
 	sort.Sort(patch.ByWeight(patches))
+	if p.verbose {
+		fmt.Println("Patches to be applied:")
+		for _, ptch := range patches {
+			fmt.Printf("[weight %d] %s\n", ptch.Weight, ptch.Filename)
+		}
+	}
 	p.ordered = patches
 	return nil
 }
