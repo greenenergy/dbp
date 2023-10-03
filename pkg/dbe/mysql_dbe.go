@@ -11,7 +11,6 @@ import (
 	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/greenenergy/dbp/pkg/set"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type MySQLDBE struct {
@@ -149,16 +148,7 @@ func (p *MySQLDBE) Patch(ptch *patch.Patch) error {
 	_, err = tx.Query(string(ptch.Body))
 	if err != nil {
 		tx.Rollback()
-		switch e := err.(type) {
-		case *pq.Error:
-			if p.debug {
-				fmt.Println("Problem patch:", string(ptch.Body))
-			}
-			return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
-		default:
-			return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
-		}
-
+		return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
 	}
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
