@@ -26,9 +26,7 @@ everything worked. I don't know why this is the case.
 */
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/greenenergy/dbp/pkg/patch"
@@ -46,29 +44,30 @@ type SQLITEArgs struct {
 	Filename string `json:"filename"`
 }
 
-func NewSQLiteDBE(credsName string, verbose bool) (DBEngine, error) {
-	var sqliteargs SQLITEArgs
-	data, err := ioutil.ReadFile(credsName)
-	if err != nil {
-		return nil, err
-	}
+func NewSQLiteDBE(args *EngineArgs) (DBEngine, error) {
+	/*
+		var sqliteargs SQLITEArgs
+		data, err := ioutil.ReadFile(credsName)
+		if err != nil {
+			return nil, err
+		}
 
-	err = json.Unmarshal(data, &sqliteargs)
-	if err != nil {
-		return nil, err
-	}
+		err = json.Unmarshal(data, &sqliteargs)
+		if err != nil {
+			return nil, err
+		}
+	*/
 
-	if verbose {
-		fmt.Println("about to open:", sqliteargs.Filename)
-	}
-	conn, err := sqlx.Open("sqlite3", sqliteargs.Filename)
+	filename := "sqlite_dummy.db"
+
+	conn, err := sqlx.Open("sqlite3", filename)
 	if err != nil {
 		return nil, fmt.Errorf("problem opening sqlite db: %s", err.Error())
 	}
 
 	dbe := &SQLiteDBE{
 		conn:    conn,
-		verbose: verbose,
+		verbose: true,
 	}
 
 	err = dbe.checkInstall()
