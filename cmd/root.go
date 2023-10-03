@@ -49,7 +49,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringP("engine", "e", "", "database engine (postgres,sqlite)")
+	rootCmd.PersistentFlags().StringP("engine", "e", "", "database engine (postgres,sqlite,mysql)")
 	rootCmd.PersistentFlags().StringP("dbcreds", "z", "", "Name of db credentials file")
 	rootCmd.PersistentFlags().BoolP("dry", "", false, "dry run")
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable debug log")

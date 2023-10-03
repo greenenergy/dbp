@@ -47,13 +47,18 @@ are free to use them however you wish to organize your data.`,
 
 		engineName := cmd.Flags().Lookup("engine").Value.String()
 		switch engineName {
+		case "mysql":
+			engine, err = dbe.NewMySQLDBE(flagargs)
+			if err != nil {
+				log.Fatal(err)
+			}
 		case "postgres":
 			engine, err = dbe.NewPGDBE(flagargs)
 			if err != nil {
 				log.Fatal(err)
 			}
 		case "sqlite":
-			engine, err = dbe.NewPGDBE(flagargs)
+			engine, err = dbe.NewSQLiteDBE(flagargs)
 			if err != nil {
 				log.Fatal(err)
 			}
