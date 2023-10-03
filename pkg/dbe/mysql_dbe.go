@@ -34,7 +34,6 @@ func NewMySQLDBE(args *EngineArgs) (DBEngine, error) {
 	//	args.Host, args.Port, args.Username, args.Name, mode, args.Password)
 
 	connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.Username, args.Password, args.Host, args.Port, args.Name)
-	fmt.Println("connection string:", connStr)
 
 	safeConnStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.Username, "<redacted>", args.Host, args.Port, args.Name)
 
