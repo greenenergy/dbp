@@ -45,19 +45,6 @@ type SQLITEArgs struct {
 }
 
 func NewSQLiteDBE(args *EngineArgs) (DBEngine, error) {
-	/*
-		var sqliteargs SQLITEArgs
-		data, err := ioutil.ReadFile(credsName)
-		if err != nil {
-			return nil, err
-		}
-
-		err = json.Unmarshal(data, &sqliteargs)
-		if err != nil {
-			return nil, err
-		}
-	*/
-
 	filename := "sqlite_dummy.db"
 
 	conn, err := sqlx.Open("sqlite3", filename)
