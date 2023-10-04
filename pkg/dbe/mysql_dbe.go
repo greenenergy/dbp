@@ -33,9 +33,10 @@ func NewMySQLDBE(args *EngineArgs) (DBEngine, error) {
 	//connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
 	//	args.Host, args.Port, args.Username, args.Name, mode, args.Password)
 
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.Username, args.Password, args.Host, args.Port, args.Name)
+	root := "%s:%s@tcp(%s:%d)/%s?multiStatements=true"
+	connStr := fmt.Sprintf(root, args.Username, args.Password, args.Host, args.Port, args.Name)
 
-	safeConnStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", args.Username, "<redacted>", args.Host, args.Port, args.Name)
+	safeConnStr := fmt.Sprintf(root, args.Username, "<redacted>", args.Host, args.Port, args.Name)
 
 	if args.Verbose {
 		fmt.Println("connstr:", safeConnStr)
@@ -139,19 +140,27 @@ func (p *MySQLDBE) DPrint(msg string) {
 }
 
 func (p *MySQLDBE) Patch(ptch *patch.Patch) error {
+	fmt.Println("Begin transaction, patching:", ptch.Filename)
+
 	tx, err := p.conn.Begin()
 	if err != nil {
 		return fmt.Errorf("problem while trying to apply patch: %s", err.Error())
 	}
 
-	_, err = tx.Query(string(ptch.Body))
+	_, err = tx.Exec(string(ptch.Body))
 	if err != nil {
-		tx.Rollback()
+		fmt.Println("rolling back due to error:", err.Error())
+		err2 := tx.Rollback()
+		if err2 != nil {
+			fmt.Println("error rolling back:", err2.Error())
+		} else {
+			fmt.Println("NO ERROR ROLLING BACK!")
+		}
 		return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
 	}
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
-	_, err = tx.Query("insert into dbp_patch_table(id, prereqs, description) values (?, ?, ?)",
+	_, err = tx.Exec("insert into dbp_patch_table(id, prereqs, description) values (?, ?, ?)",
 		ptch.Id, prereqs, ptch.Description)
 
 	if err != nil {

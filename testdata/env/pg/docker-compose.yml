@@ -1,7 +1,8 @@
 version: "3.3"
 services:
   db:
-    image: postgres-setup:latest
+    #image: postgres-setup:latest
+    image: postgres:15rc2
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -10,7 +11,11 @@ services:
     expose:
       - "5434"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+    volumes:
+      - ./docker/initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+volumes:
+  postgres_data:
