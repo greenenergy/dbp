@@ -4,15 +4,10 @@ all:
 	@echo "folder and then run 'make start && make install'. dbp will try to run all your patches into a fresh database."
 	@echo "'make stop' will then shut down the db and cleanup."
 	@echo "Usage:"
-	@echo "make docker - build docker image necessary to initialize test db"
 	@echo "make start - start postgres test environment. Make sure you 'make docker' first"
 	@echo "make install - install patches, after 'make start'"
 	@echo "make stop - stop postgres test environment"
 	@echo "make clean - remove all trace of the pg db. Otherwise it survives docker-compose restarts"
-
-.PHONY: docker
-docker:
-	(cd docker && docker build . -t postgres-setup:latest)
 
 .PHONY: start
 start:
@@ -46,7 +41,4 @@ dry:
 
 stop:
 	docker-compose down
-
-clean:
-	rm -rf data
 
