@@ -30,9 +30,6 @@ type MySqlArgs struct {
 
 // func NewMySQLDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 func NewMySQLDBE(args *EngineArgs) (DBEngine, error) {
-	//connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
-	//	args.Host, args.Port, args.Username, args.Name, mode, args.Password)
-
 	root := "%s:%s@tcp(%s:%d)/%s?multiStatements=true"
 	connStr := fmt.Sprintf(root, args.Username, args.Password, args.Host, args.Port, args.Name)
 
@@ -60,6 +57,11 @@ func NewMySQLDBE(args *EngineArgs) (DBEngine, error) {
 		verbose: args.Verbose,
 		debug:   args.Debug,
 		retries: args.Retries,
+	}
+
+	_, err = mysqldbe.conn.Exec("set transaction isolation level serializable")
+	if err != nil {
+		return nil, fmt.Errorf("problem setting transaction isolation level: %s", err.Error())
 	}
 
 	err = mysqldbe.checkInstall()
@@ -140,7 +142,7 @@ func (p *MySQLDBE) DPrint(msg string) {
 }
 
 func (p *MySQLDBE) Patch(ptch *patch.Patch) error {
-	fmt.Println("Begin transaction, patching:", ptch.Filename)
+	fmt.Println("TX.BEGIN:", ptch.Filename)
 
 	tx, err := p.conn.Begin()
 	if err != nil {
@@ -149,7 +151,7 @@ func (p *MySQLDBE) Patch(ptch *patch.Patch) error {
 
 	_, err = tx.Exec(string(ptch.Body))
 	if err != nil {
-		fmt.Println("rolling back due to error:", err.Error())
+		fmt.Println("TX.ROLLBACK:", err.Error())
 		err2 := tx.Rollback()
 		if err2 != nil {
 			fmt.Println("error rolling back:", err2.Error())
@@ -171,6 +173,7 @@ func (p *MySQLDBE) Patch(ptch *patch.Patch) error {
 		return fmt.Errorf("problem applying patch file %q: %s", ptch.Filename, err.Error())
 	}
 
+	fmt.Println("TX.COMMIT")
 	err = tx.Commit()
 	if err != nil {
 		fmt.Println("*** Problem committing:", err.Error())
