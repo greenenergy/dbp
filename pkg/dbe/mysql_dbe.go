@@ -59,10 +59,10 @@ func NewMySQLDBE(args *EngineArgs) (DBEngine, error) {
 		retries: args.Retries,
 	}
 
-	_, err = mysqldbe.conn.Exec("set transaction isolation level serializable")
-	if err != nil {
-		return nil, fmt.Errorf("problem setting transaction isolation level: %s", err.Error())
-	}
+	//_, err = mysqldbe.conn.Exec("set transaction isolation level serializable")
+	//if err != nil {
+	//	return nil, fmt.Errorf("problem setting transaction isolation level: %s", err.Error())
+	//}
 
 	err = mysqldbe.checkInstall()
 	if err != nil {
