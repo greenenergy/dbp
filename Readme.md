@@ -60,3 +60,5 @@ DBP, on the other hand, does things differently:
 * Filenames don't matter. A comment header in each patch file contains an ID (which can be any string wtihout commas in it) and a prereq line listing all the prereuisite patches that should be applied before this patch is applied. This allows complex and sophisticated ordering to be managed, if need be. The prereq field can be ignored if order doesn't matter. One file with the filename "init_patch.sql" will be considered the starting point, everything else is ID based.
 * A directory is passed as the starting point, and the whole tree is walked and the map of files and relationships is built from there.
 * All patches are applied when the patcher is run, and the system is idempotent, so re-patching an existing system will have no effect unless there are new patches involved.
+
+
