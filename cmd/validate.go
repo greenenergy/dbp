@@ -34,8 +34,6 @@ var validateCmd = &cobra.Command{
 Problems could include multiple files with the same ID, referring to
 an ID that doesn't exist, etc`,
 	Run: func(cmd *cobra.Command, args []string) {
-		folder := cmd.Flags().Lookup("folder").Value.String()
-
 		engine := dbe.NewMockDBE()
 
 		verbose, err := cmd.Flags().GetBool("verbose")
@@ -43,7 +41,21 @@ an ID that doesn't exist, etc`,
 			log.Fatal(err)
 		}
 
-		p, err := patcher.NewPatcher(false, verbose, engine)
+		folder, err := cmd.Flags().GetString("folder")
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		if folder == "" {
+			log.Fatal("you must specify a folder")
+		}
+
+		ignore, err := cmd.Flags().GetString("ignore")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+
+		p, err := patcher.NewPatcher(false, verbose, engine, folder, ignore)
 		if err != nil {
 			log.Fatal(err)
 		}

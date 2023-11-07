@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -44,6 +43,8 @@ type Patcher struct {
 	verbose      bool
 	engine       dbe.DBEngine
 	installedIDs *set.Set
+	folder		 string
+	ignore		 string
 }
 
 func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
@@ -56,12 +57,14 @@ func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
 	return "", fmt.Errorf("flag not found")
 }
 
-func NewPatcher(dry, verbose bool, engine dbe.DBEngine) (*Patcher, error) {
+func NewPatcher(dry, verbose bool, engine dbe.DBEngine, folder, ignore string) (*Patcher, error) {
 	return &Patcher{
 		dry:     dry,
 		verbose: verbose,
 		patches: make(map[string]*patch.Patch),
 		engine:  engine,
+		folder: folder,
+		ignore: ignore,
 	}, nil
 }
 
@@ -128,7 +131,7 @@ func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
 		return nil, fmt.Errorf("file %q missing ID field", thePath)
 	}
 
-	data, err := ioutil.ReadFile(thePath)
+	data, err := os.ReadFile(thePath)
 	if err != nil {
 		return nil, err
 	}
@@ -168,10 +171,16 @@ func (p *Patcher) bumpWeight(thepatch *patch.Patch, detectionMap map[string]*pat
 }
 
 func (p *Patcher) Resolve() error {
-	ids, err := p.engine.GetInstalledIDs()
-	if err != nil {
-		return err
+	ids := &set.Set{}
+	var err error
+
+	if !p.dry {
+		ids, err = p.engine.GetInstalledIDs()
+		if err != nil {
+			return err
+		}
 	}
+
 	p.installedIDs = ids
 	var patches []*patch.Patch
 
@@ -211,7 +220,29 @@ func (p *Patcher) Resolve() error {
 	return nil
 }
 
+func (p *Patcher) shouldIgnore(thePath string) bool {
+	if p.ignore == "" {
+		return false
+	}
+
+	parts := strings.Split(p.ignore, ",")
+	for _, part := range parts {
+
+		fullPath := filepath.Join(p.folder, part)
+		if strings.HasPrefix(thePath, fullPath) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
+
+	if p.shouldIgnore(thePath) {
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}
@@ -269,7 +300,9 @@ func (p *Patcher) Process() error {
 			return err
 		}
 		// Skip applying this in the following loop
-		p.installedIDs.Add(p.initPatch.Id)
+		if err := p.installedIDs.Add(p.initPatch.Id) ;  err != nil {
+			return err
+		}
 		numDone += 1
 	}
 

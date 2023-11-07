@@ -8,11 +8,11 @@ PROG = dbp
 
 GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
 
-empty:
-	@echo "Make targets:"
-	@echo "make $(PROG)"
-	@echo "make clean"
-	@echo "make install"
+#empty:
+#	@echo "Make targets:"
+#	@echo "make $(PROG)"
+#	@echo "make clean"
+#	@echo "make install"
 
 $(PROG): $(SRC) #api/server/tm.pb.go
 	CGO_ENABLED=0 GOOS=linux go build -v -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o $(PROG)

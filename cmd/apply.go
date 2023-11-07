@@ -36,39 +36,48 @@ order them according to prerequisites and apply them to an indicated database.
 The filenames are not used by the patching system, or the directory tree, so you
 are free to use them however you wish to organize your data.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		folder := cmd.Flags().Lookup("folder").Value.String()
 
 		flagargs, err := util.FlagsToArgs(cmd.Flags())
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		var engine dbe.DBEngine
-
-		engineName := cmd.Flags().Lookup("engine").Value.String()
-		switch engineName {
-		case "mysql":
-			engine, err = dbe.NewMySQLDBE(flagargs)
-			if err != nil {
-				log.Fatal(err)
-			}
-		case "postgres":
-			engine, err = dbe.NewPGDBE(flagargs)
-			if err != nil {
-				log.Fatal(err)
-			}
-		case "sqlite":
-			engine, err = dbe.NewSQLiteDBE(flagargs)
-			if err != nil {
-				log.Fatal(err)
-			}
-		default:
-			engine = dbe.NewMockDBE()
+		folder, err := cmd.Flags().GetString("folder")
+		if err != nil {
+			log.Fatal(err.Error())
 		}
+		if folder == "" {
+			log.Fatal("you must specify a folder")
+		}
+
+		var engine dbe.DBEngine
 
 		dry, err := cmd.Flags().GetBool("dry")
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		if !dry {
+			engineName := cmd.Flags().Lookup("engine").Value.String()
+			switch engineName {
+			case "mysql":
+				engine, err = dbe.NewMySQLDBE(flagargs)
+				if err != nil {
+					log.Fatal(err)
+				}
+			case "postgres":
+				engine, err = dbe.NewPGDBE(flagargs)
+				if err != nil {
+					log.Fatal(err)
+				}
+			case "sqlite":
+				engine, err = dbe.NewSQLiteDBE(flagargs)
+				if err != nil {
+					log.Fatal(err)
+				}
+			default:
+				engine = dbe.NewMockDBE()
+			}
 		}
 
 		verbose, err := cmd.Flags().GetBool("verbose")
@@ -76,7 +85,12 @@ are free to use them however you wish to organize your data.`,
 			log.Fatal(err)
 		}
 
-		p, err := patcher.NewPatcher(dry, verbose, engine)
+		ignore, err := cmd.Flags().GetString("ignore")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		p, err := patcher.NewPatcher(dry, verbose, engine, folder, ignore)
 		if err != nil {
 			log.Fatal(err)
 		}
