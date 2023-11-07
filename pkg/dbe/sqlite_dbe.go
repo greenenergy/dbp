@@ -79,7 +79,9 @@ func (p *SQLiteDBE) GetInstalledIDs() (*set.Set, error) {
 		if err != nil {
 			return nil, fmt.Errorf("problem scanning id: %s", err.Error())
 		}
-		output.Add(id)
+		if err := output.Add(id) ; err != nil {
+			return nil, fmt.Errorf("problem scanning adding id: %s", err.Error())
+		}
 	}
 	return &output, nil
 }

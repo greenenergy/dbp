@@ -54,7 +54,6 @@ an ID that doesn't exist, etc`,
 			log.Fatal(err)
 		}
 
-
 		p, err := patcher.NewPatcher(false, verbose, engine, folder, ignore)
 		if err != nil {
 			log.Fatal(err)
