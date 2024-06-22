@@ -30,7 +30,7 @@ docker:
 	docker build . -t livewireholdings/dbp:$(GIT_VERSION)
 
 docker-push:
-	docker push livewireholdings/dbp:$(GIT_VERSION)
+	docker push -a livewireholdings/dbp:$(GIT_VERSION)
 
 test:
 	go test -coverprofile=coverage.out ./...
