@@ -27,7 +27,7 @@ func TestPatcher(t *testing.T) {
 
 	engine := dbe.NewMockDBE()
 
-	p, err := NewPatcher(false, true, engine)
+	p, err := NewPatcher(false, true, engine, "", "")
 	if err != nil {
 		t.Fatal(err)
 	}

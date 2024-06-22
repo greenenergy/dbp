@@ -23,9 +23,10 @@ import (
 
 	"github.com/greenenergy/dbp/pkg/dbe"
 	"github.com/greenenergy/dbp/pkg/patcher"
-	"github.com/greenenergy/dbp/pkg/util"
 	"github.com/spf13/cobra"
 )
+
+var ea *dbe.EngineArgs
 
 // dbCmd represents the db command
 var applyCmd = &cobra.Command{
@@ -37,9 +38,13 @@ The filenames are not used by the patching system, or the directory tree, so you
 are free to use them however you wish to organize your data.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		flagargs, err := util.FlagsToArgs(cmd.Flags())
+		verbose, err := cmd.Flags().GetBool("verbose")
 		if err != nil {
-			log.Fatal(err.Error())
+			log.Fatal(err)
+		}
+		if verbose {
+			fmt.Println("    real conn str:", ea.ToConnStr(false))
+			fmt.Println("loggable conn str:", ea.ToConnStr(true))
 		}
 
 		folder, err := cmd.Flags().GetString("folder")
@@ -61,28 +66,23 @@ are free to use them however you wish to organize your data.`,
 			engineName := cmd.Flags().Lookup("engine").Value.String()
 			switch engineName {
 			case "mysql":
-				engine, err = dbe.NewMySQLDBE(flagargs)
+				engine, err = dbe.NewMySQLDBE(ea)
 				if err != nil {
 					log.Fatal(err)
 				}
 			case "postgres":
-				engine, err = dbe.NewPGDBE(flagargs)
+				engine, err = dbe.NewPGDBE(ea)
 				if err != nil {
 					log.Fatal(err)
 				}
 			case "sqlite":
-				engine, err = dbe.NewSQLiteDBE(flagargs)
+				engine, err = dbe.NewSQLiteDBE(ea)
 				if err != nil {
 					log.Fatal(err)
 				}
 			default:
 				engine = dbe.NewMockDBE()
 			}
-		}
-
-		verbose, err := cmd.Flags().GetBool("verbose")
-		if err != nil {
-			log.Fatal(err)
 		}
 
 		ignore, err := cmd.Flags().GetString("ignore")
@@ -111,12 +111,5 @@ are free to use them however you wish to organize your data.`,
 func init() {
 	rootCmd.AddCommand(applyCmd)
 	applyCmd.Flags().StringP("folder", "f", "", "set the processing folder")
-	applyCmd.Flags().BoolP("verbose", "v", false, "be verbose")
-	applyCmd.Flags().StringP("db.host", "", "", "hostname of db server")
-	applyCmd.Flags().IntP("db.port", "", 5432, "Port to connect to")
-	applyCmd.Flags().StringP("db.username", "", "", "Username to use for db")
-	applyCmd.Flags().StringP("db.password", "", "", "Password to use for db")
-	applyCmd.Flags().StringP("db.name", "", "", "database name")
-	applyCmd.Flags().BoolP("db.tls", "", false, "Use TLS connection")
-	applyCmd.Flags().IntP("retries", "r", 10, "Number of retries when trying to connect")
+	ea = dbe.NewEngineArgs(applyCmd.Flags())
 }

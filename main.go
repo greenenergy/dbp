@@ -16,13 +16,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package main
 
-import "github.com/greenenergy/dbp/cmd"
+import (
+	"time"
 
-var (
-	Version string
+	"github.com/greenenergy/dbp/cmd"
 )
 
+var Version string
+
+type User struct {
+	Name  string    `json:"name" db:"name"`
+	Email string    `json:"email" db:"email"`
+	Born  time.Time `json:"born" db:"born"`
+}
+
 func main() {
+	//whatever()
 	cmd.Version = Version
 	cmd.Execute()
 }

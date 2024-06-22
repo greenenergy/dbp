@@ -36,11 +36,6 @@ func FlagsToArgs(flags *pflag.FlagSet) (*dbe.EngineArgs, error) {
 		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
 	}
 
-	args.SSL, err = flags.GetBool("db.tls")
-	if err != nil {
-		return nil, fmt.Errorf("problem reading flag: %s", err.Error())
-	}
-
 	args.Verbose = flags.Lookup("verbose").Value.String() == "true"
 
 	args.Debug, err = flags.GetBool("debug")

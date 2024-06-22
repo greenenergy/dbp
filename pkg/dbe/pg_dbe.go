@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greenenergy/dbp/pkg/patch"
-	"github.com/greenenergy/dbp/pkg/set"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	//_ "github.com/lib/pq" // This  is the postgres driver for sqlx
+
+	"github.com/greenenergy/dbp/pkg/patch"
+	"github.com/greenenergy/dbp/pkg/set"
 )
 
 type PGDBE struct {
@@ -47,16 +47,23 @@ type PGArgs struct {
 
 // func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 func NewPGDBE(args *EngineArgs) (DBEngine, error) {
-	mode := "disable"
-	if args.SSL {
-		mode = "require"
-	}
 
-	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
-		args.Host, args.Port, args.Username, args.Name, mode, args.Password)
+	connStr := args.ToConnStr(false)
+	safeConnStr := args.ToConnStr(true)
 
-	safeConnStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=<redacted>",
-		args.Host, args.Port, args.Username, args.Name, mode)
+	/*
+		connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
+			args.Host, args.Port, args.User, args.Name, args.SSLMode, args.Password)
+
+		safeConnStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=<redacted>",
+			args.Host, args.Port, args.User, args.Name, args.SSLMode)
+	*/
+
+	/*
+		if args.SSLCert != "" {
+			connStr +=
+		}
+	*/
 
 	if args.Verbose {
 		fmt.Println("connstr:", safeConnStr)
