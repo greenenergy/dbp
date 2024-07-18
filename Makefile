@@ -15,7 +15,8 @@ GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
 #	@echo "make install"
 
 $(PROG): $(SRC) #api/server/tm.pb.go
-	CGO_ENABLED=0 GOOS=linux go build -v -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o $(PROG)
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o $(PROG)
+	ls -l .
 #	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
 
 .PHONY: install
