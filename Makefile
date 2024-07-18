@@ -8,6 +8,7 @@ PROG = dbp
 
 GIT_VERSION = $(shell git describe --long --dirty)
 
+
 #empty:
 #	@echo "Make targets:"
 #	@echo "make $(PROG)"
