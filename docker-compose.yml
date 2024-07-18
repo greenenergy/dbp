@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./testdata/certs:/tmp/certs:ro
+    ports:
+      - "5432:5432"
+    command: >
+      sh -c "
+      if [ ! -s /var/lib/postgresql/data/postgresql.conf ]; then
+        gosu postgres initdb;
+      fi &&
+      mkdir /var/lib/postgresql/certs &&
+      cp /tmp/certs/dbserver.crt /var/lib/postgresql/certs/ &&
+      cp /tmp/certs/dbserver.key /var/lib/postgresql/certs/ &&
+      cp /tmp/certs/acmeCA.crt /var/lib/postgresql/certs/ &&
+      chown postgres:postgres /var/lib/postgresql/certs/dbserver.crt /var/lib/postgresql/certs/dbserver.key /var/lib/postgresql/certs/acmeCA.crt &&
+      chmod 0600 /var/lib/postgresql/certs/dbserver.key &&
+      exec gosu postgres postgres -c ssl=on -c ssl_cert_file=/var/lib/postgresql/certs/dbserver.crt -c ssl_key_file=/var/lib/postgresql/certs/dbserver.key -c ssl_ca_file=/var/lib/postgresql/certs/acmeCA.crt
+      "
+
+  dbp:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    volumes:
+      - ./testdata/certs:/certs:ro
+      - ./testdata/env/pg/patches:/patches:ro
+    command: >
+      sh -c "
+      until nc -z ${DB_HOST} ${DB_PORT}; do
+        echo 'Waiting for Postgres...'
+        sleep 2;
+      done;
+      dbp apply --db.host ${DB_HOST} --db.port ${DB_PORT} --db.username ${DB_USER} --db.password ${DB_PASSWORD} --db.name ${DB_NAME} --db.sslcert ${DB_SSLCERT} --db.sslkey ${DB_SSLKEY} --db.sslrootcert ${DB_ROOTCERT} --db.sslmode  verify-full -f /patches -v
+      "

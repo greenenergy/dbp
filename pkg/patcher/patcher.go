@@ -43,8 +43,8 @@ type Patcher struct {
 	verbose      bool
 	engine       dbe.DBEngine
 	installedIDs *set.Set
-	folder		 string
-	ignore		 string
+	folder       string
+	ignore       string
 }
 
 func GetFlagString(name string, flags *pflag.FlagSet) (string, error) {
@@ -63,8 +63,8 @@ func NewPatcher(dry, verbose bool, engine dbe.DBEngine, folder, ignore string) (
 		verbose: verbose,
 		patches: make(map[string]*patch.Patch),
 		engine:  engine,
-		folder: folder,
-		ignore: ignore,
+		folder:  folder,
+		ignore:  ignore,
 	}, nil
 }
 
@@ -264,10 +264,6 @@ func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
 		}
 
 		if filename == "init_patch.sql" {
-			if err != nil {
-				return err
-			}
-
 			p.initPatch = initPatch
 		}
 	}
@@ -300,7 +296,7 @@ func (p *Patcher) Process() error {
 			return err
 		}
 		// Skip applying this in the following loop
-		if err := p.installedIDs.Add(p.initPatch.Id) ;  err != nil {
+		if err := p.installedIDs.Add(p.initPatch.Id); err != nil {
 			return err
 		}
 		numDone += 1
