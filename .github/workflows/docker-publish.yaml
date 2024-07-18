@@ -38,8 +38,12 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v3
       with:
+        context: .  # Ensure the context is set to the project root
+        file: ./Dockerfile  # Explicitly specify the Dockerfile location
         push: true
+        no-cache: true  # Disable build cache
         tags: livewireholdings/dbp:latest
+
 
     - name: Logout from Docker Hub
       run: docker logout
