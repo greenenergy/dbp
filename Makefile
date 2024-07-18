@@ -14,9 +14,8 @@ GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
 #	@echo "make clean"
 #	@echo "make install"
 
-$(PROG): $(SRC) #api/server/tm.pb.go
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o $(PROG)
-	ls -l .
+build/$(PROG): $(SRC) #api/server/tm.pb.go
+	CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o build/$(PROG)
 #	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
 
 .PHONY: install
@@ -28,7 +27,7 @@ clean:
 	@rm -f $(PROG)
 
 docker:
-	docker build . -t livewireholdings/dbp:$(GIT_VERSION)
+	(cd build && docker build . -t livewireholdings/dbp:$(GIT_VERSION))
 
 docker-push:
 	docker push livewireholdings/dbp:$(GIT_VERSION)
