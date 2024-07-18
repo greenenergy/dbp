@@ -6,9 +6,8 @@
 SRC = $(shell find . -name "*.go")
 PROG = dbp
 
-GIT_VERSION = $(shell git describe --long --dirty)
-
-
+GIT_VERSION = $(shell git describe --long | sed 's/-g[0-9a-f]\{7,\}$$//')
+#git describe --long | sed 's/-g[0-9a-f]\{7,\}$//'
 #empty:
 #	@echo "Make targets:"
 #	@echo "make $(PROG)"
@@ -43,3 +42,4 @@ test-html: test
 
 versiontag:
 	@-echo "$(GIT_VERSION)"
+
