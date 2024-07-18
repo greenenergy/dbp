@@ -61,9 +61,11 @@ are free to use them however you wish to organize your data.`,
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("DRY RUN:", dry)
 
 		if !dry {
 			engineName := cmd.Flags().Lookup("engine").Value.String()
+			fmt.Println("ENGINE NAME:", engineName)
 			switch engineName {
 			case "mysql":
 				engine, err = dbe.NewMySQLDBE(ea)
@@ -80,8 +82,11 @@ are free to use them however you wish to organize your data.`,
 				if err != nil {
 					log.Fatal(err)
 				}
-			default:
+			case "mock":
 				engine = dbe.NewMockDBE()
+
+			default:
+				log.Fatal(fmt.Errorf("no engine specified"))
 			}
 		}
 

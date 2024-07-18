@@ -25,7 +25,7 @@ install:
 
 .PHONY: clean
 clean:
-	@rm -f $(PROG)
+	@rm -f build/$(PROG)
 
 docker:
 	(cd build && docker build . -t livewireholdings/dbp:$(GIT_VERSION))
