@@ -6,7 +6,7 @@
 SRC = $(shell find . -name "*.go")
 PROG = dbp
 
-GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
+GIT_VERSION = $(shell git describe --long --dirty)
 
 #empty:
 #	@echo "Make targets:"
@@ -15,6 +15,7 @@ GIT_VERSION = $(shell git describe --long --dirty || echo wtf)
 #	@echo "make install"
 
 build/$(PROG): $(SRC) #api/server/tm.pb.go
+	@echo "Building version $(GIT_VERSION)"
 	CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o build/$(PROG)
 #	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
 
