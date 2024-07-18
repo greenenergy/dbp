@@ -39,5 +39,5 @@ test:
 test-html: test
 	go tool cover -html=coverage.out
 
-print:
-	@-echo "GIT_VERSION: $(GIT_VERSION)"
+versiontag:
+	@-echo "$(GIT_VERSION)"
