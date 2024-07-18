@@ -17,17 +17,14 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y make
 
-    - name: Verify dbp binary exists
-      run: ls -l build/dbp
+    - name: Run Makefile
+      run: make
 
     - name: Verify build directory contents
       run: ls -l build
 
     - name: Verify project root contents
       run: ls -l
-
-    - name: Run Makefile
-      run: make
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
