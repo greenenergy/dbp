@@ -1,4 +1,4 @@
-dbp
+build/dbp
 
 testdata/*
 !testdata/env/
