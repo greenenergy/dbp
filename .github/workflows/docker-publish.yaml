@@ -28,7 +28,7 @@ jobs:
       run: echo "TAG=$(make versiontag)" >> $GITHUB_ENV
 
     - name: Build for ${{ matrix.arch }}
-      run: make build/${{ matrix.arch }}/$(PROG)
+      run: make build/${{ matrix.arch }}/dbp
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
