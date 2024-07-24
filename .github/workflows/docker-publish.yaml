@@ -10,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -23,11 +27,8 @@ jobs:
       id: get_tag
       run: echo "TAG=$(make versiontag)" >> $GITHUB_ENV
 
-    - name: Build for amd64
-      run: make build/$(PROG)-amd64
-
-    - name: Build for arm64
-      run: make build/$(PROG)-arm64
+    - name: Build for ${{ matrix.arch }}
+      run: make build/${{ matrix.arch }}/$(PROG)
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
@@ -53,6 +54,7 @@ jobs:
         push: true
         no-cache: true  # Disable build cache
         platforms: linux/amd64,linux/arm64  # Specify target platforms
+        build-args: TARGETARCH=${{ matrix.arch }}
         tags: |
           livewireholdings/dbp:latest
           livewireholdings/dbp:${{ env.TAG }}

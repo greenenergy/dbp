@@ -7,20 +7,16 @@ SRC = $(shell find . -name "*.go")
 PROG = dbp
 
 GIT_VERSION = $(shell git describe --long | sed 's/-g[0-9a-f]\{7,\}$$//')
-#git describe --long | sed 's/-g[0-9a-f]\{7,\}$//'
-#empty:
-#	@echo "Make targets:"
-#	@echo "make $(PROG)"
-#	@echo "make clean"
-#	@echo "make install"
 
-build/$(PROG)-amd64: $(SRC)
+build/amd64/$(PROG): $(SRC)
 	@echo "Building version $(GIT_VERSION) for amd64"
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo -o build/$(PROG)-amd64
+	mkdir -p build/amd64
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo -o build/amd64/$(PROG)
 
-build/$(PROG)-arm64: $(SRC)
+build/arm64/$(PROG): $(SRC)
 	@echo "Building version $(GIT_VERSION) for arm64"
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo -o build/$(PROG)-arm64
+	mkdir -p build/arm64
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo -o build/arm64/$(PROG)
 
 .PHONY: install
 install:
@@ -28,7 +24,7 @@ install:
 
 .PHONY: clean
 clean:
-	@rm -f build/$(PROG)-amd64 build/$(PROG)-arm64
+	@rm -rf build/amd64 build/arm64
 
 docker:
 	(cd build && docker build . -t livewireholdings/dbp:$(GIT_VERSION))
