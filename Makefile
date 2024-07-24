@@ -14,10 +14,13 @@ GIT_VERSION = $(shell git describe --long | sed 's/-g[0-9a-f]\{7,\}$$//')
 #	@echo "make clean"
 #	@echo "make install"
 
-build/$(PROG): $(SRC) #api/server/tm.pb.go
-	@echo "Building version $(GIT_VERSION)"
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo  -o build/$(PROG)
-#	go build -o $(PROG) -v -ldflags "-w -s -X main.Version=$(GIT_VERSION)"
+build/$(PROG)-amd64: $(SRC)
+	@echo "Building version $(GIT_VERSION) for amd64"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo -o build/$(PROG)-amd64
+
+build/$(PROG)-arm64: $(SRC)
+	@echo "Building version $(GIT_VERSION) for arm64"
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-w -s -extldflags '-static' -X main.Version=$(GIT_VERSION)" -a -installsuffix cgo -o build/$(PROG)-arm64
 
 .PHONY: install
 install:
@@ -25,7 +28,7 @@ install:
 
 .PHONY: clean
 clean:
-	@rm -f build/$(PROG)
+	@rm -f build/$(PROG)-amd64 build/$(PROG)-arm64
 
 docker:
 	(cd build && docker build . -t livewireholdings/dbp:$(GIT_VERSION))
