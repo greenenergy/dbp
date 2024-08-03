@@ -29,7 +29,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "report version of dbp command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(Version)
+		fmt.Printf("%s\n", Version)
 	},
 }
 
