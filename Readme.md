@@ -16,9 +16,11 @@ At the top of each patch file, you need to add two comment lines:
     
         -- id: <id>
         -- prereqs: <id>,<id>,<id>...
+        -- options: chop
 
 The id can be any string without spaces.
 The prereqs line is a comma separated list of patches that need to be applied before this one. The prereqs refer to the id field of the other patches, so it makes sense to use filenames for the ids. I usually use the filename without the .sql extension, ie:
+The options line is for adding options. Current option is "chop", which chops the sql file into individual statements via ';' for tracking down errors within the file when applying.
 
 File1, bugfix_1234.sql:
         

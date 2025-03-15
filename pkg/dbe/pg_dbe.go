@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"regexp"
 	"strings"
 	"time"
 
@@ -171,19 +172,51 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		return fmt.Errorf("problem while trying to apply patch: %s", err.Error())
 	}
 
-	_, err = tx.Query(string(ptch.Body))
-	if err != nil {
-		tx.Rollback()
-		switch e := err.(type) {
-		case *pq.Error:
-			if p.debug {
-				fmt.Println("Problem patch:", string(ptch.Body))
-			}
-			return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
-		default:
-			return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
-		}
+	if ptch.HasOption("chop") {
+		// Chop the file according to semicolons
+		re := regexp.MustCompile(`(?s)(.*?);`)
+		matches := re.FindAllStringSubmatchIndex(string(ptch.Body), -1)
 
+		for _, match := range matches {
+			// match[0] is the start of the full match, match[1] is the end.
+			// match[2] and match[3] are the subgroup (.*?).
+			start := match[2]
+			end := match[1]
+			stmtText := ptch.Body[start:end] // Includes the semicolon.
+			fmt.Println("Executing:", stmtText)
+			_, err = tx.Query(string(stmtText))
+			if err != nil {
+				if re := tx.Rollback(); re != nil {
+					fmt.Println("*** Error rolling back:", err)
+				}
+				switch e := err.(type) {
+				case *pq.Error:
+					if p.debug {
+						fmt.Println("Problem patch:", string(ptch.Body))
+						fmt.Println("*** Problem query:", stmtText)
+					}
+					return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
+				default:
+					return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
+				}
+			}
+		}
+	} else {
+		_, err = tx.Query(string(ptch.Body))
+		if err != nil {
+			if rerr := tx.Rollback(); rerr != nil {
+				fmt.Println("*** Error rolling back:", err)
+			}
+			switch e := err.(type) {
+			case *pq.Error:
+				if p.debug {
+					fmt.Println("Problem patch:", string(ptch.Body))
+				}
+				return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
+			default:
+				return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
+			}
+		}
 	}
 
 	prereqs := strings.Join(ptch.Prereqs, ",")

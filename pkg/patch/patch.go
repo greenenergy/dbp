@@ -16,6 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package patch
 
+import "strings"
+
 type Patch struct {
 	Id          string   `json:"id"`
 	Description string   `json:"description"`
@@ -23,6 +25,17 @@ type Patch struct {
 	Body        []byte   `json:"-"`
 	Weight      int      `json:"weight"`
 	Filename    string   `json:"filename"`
+	Options     []string `json:"options"`
+}
+
+func (p *Patch) HasOption(o string) bool {
+	for _, option := range p.Options {
+		// Case insensitive compare
+		if strings.EqualFold(option, o) {
+			return true
+		}
+	}
+	return false
 }
 
 type ByWeight []*Patch
