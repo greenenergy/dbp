@@ -124,6 +124,7 @@ func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
 			newp.Description = val
 		case "options":
 			newp.Options = strings.Split(val, ",")
+			fmt.Println("options detected:", newp.Options)
 		}
 	}
 

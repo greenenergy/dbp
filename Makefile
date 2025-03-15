@@ -45,6 +45,7 @@ docker-local: all
 	docker buildx build \
         --platform linux/amd64,linux/arm64 \
         -t livewireholdings/dbp:$(GIT_VERSION) \
+        -t livewireholdings/dbp:latest \
         --load \
         -f Dockerfile \
         .)

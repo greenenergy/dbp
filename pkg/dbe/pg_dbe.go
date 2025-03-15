@@ -173,6 +173,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	}
 
 	if ptch.HasOption("chop") {
+		fmt.Println("chop option detected")
 		// Chop the file according to semicolons
 		re := regexp.MustCompile(`(?s)(.*?);`)
 		matches := re.FindAllStringSubmatchIndex(string(ptch.Body), -1)
@@ -202,6 +203,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 			}
 		}
 	} else {
+		fmt.Println("chop option NOT detected")
 		_, err = tx.Query(string(ptch.Body))
 		if err != nil {
 			if rerr := tx.Rollback(); rerr != nil {
