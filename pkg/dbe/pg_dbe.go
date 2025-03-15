@@ -184,7 +184,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 			start := match[2]
 			end := match[1]
 			stmtText := ptch.Body[start:end] // Includes the semicolon.
-			fmt.Println("Executing:", stmtText)
+			fmt.Println("Executing:", string(stmtText))
 			_, err = tx.Query(string(stmtText))
 			if err != nil {
 				if re := tx.Rollback(); re != nil {
@@ -194,7 +194,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 				case *pq.Error:
 					if p.debug {
 						fmt.Println("Problem patch:", string(ptch.Body))
-						fmt.Println("*** Problem query:", stmtText)
+						fmt.Println("*** Problem query:", string(stmtText))
 					}
 					return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 				default:

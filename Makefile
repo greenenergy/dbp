@@ -40,15 +40,13 @@ docker: all
 
 # Local build option
 docker-local: all
-	@echo "Building multi-arch Docker image locally version $(GIT_VERSION)"
+	@echo "Building single-arch Docker image locally version $(GIT_VERSION)"
 	(cd build && \
-	docker buildx build \
-        --platform linux/amd64,linux/arm64 \
-        -t livewireholdings/dbp:$(GIT_VERSION) \
-        -t livewireholdings/dbp:latest \
-        --load \
-        -f Dockerfile \
-        .)
+	docker build \
+		--platform linux/amd64 \
+		-t livewireholdings/dbp:$(GIT_VERSION) \
+		-f Dockerfile \
+		.)
 
 docker-push:
 	docker push livewireholdings/dbp:$(GIT_VERSION)
