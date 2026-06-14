@@ -3,7 +3,9 @@ name: Build and Push Docker image
 on:
   push:
     branches:
-      - main  # or any other branch you want to trigger the workflow
+      - main
+    tags:
+      - 'v*'
 
 jobs:
 
