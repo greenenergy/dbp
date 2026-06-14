@@ -47,6 +47,88 @@ You can demonstrate dbp's detection of various problems via patch hierarchies in
     ./dbp apply -f testdata/missing_id_1
     ./dbp apply -f testdata/missing_id_2
 
+## Docker / Container Usage
+
+The recommended deployment pattern for dbp is as a **purpose-built container** that carries both the `dbp` binary and the patch files for a specific project. The container runs as an init step before your application server starts, applies any outstanding patches, and exits cleanly.
+
+### Dockerfile (in your project repo)
+
+```dockerfile
+FROM golang:1.25 AS builder
+RUN go install github.com/greenenergy/dbp@latest
+
+FROM alpine:latest
+COPY --from=builder /go/bin/dbp /usr/local/bin/dbp
+
+# Bake your project's patch files into the image
+COPY patches /patches
+
+ENTRYPOINT ["dbp", "apply", "-e", "postgres", "-f", "/patches"]
+```
+
+### docker-compose.yml
+
+```yaml
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: myapp
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  dbp:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbp
+    environment:
+      DB_HOST: postgres
+      DB_NAME: myapp
+      DB_USER: myapp
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SSLMODE: disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  server:
+    image: myapp:latest
+    depends_on:
+      dbp:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+```
+
+The `service_completed_successfully` condition tells Compose to wait until the dbp container exits with code 0 before starting the application server. The retries flag (`-r`, default 10) handles the window between postgres becoming healthy and accepting connections.
+
+### Environment variables
+
+Connection parameters can be set via environment variables instead of CLI flags:
+
+| Environment variable | CLI flag        | Default   |
+|----------------------|-----------------|-----------|
+| `DB_HOST`            | `--db.host`     | (none)    |
+| `DB_USER`            | `--db.username` | (none)    |
+| `DB_PASSWORD`        | `--db.password` | (none)    |
+| `DB_NAME`            | `--db.name`     | (none)    |
+| `DB_SSLMODE`         | `--db.sslmode`  | `require` |
+| `DB_SSLCERT`         | `--db.sslcert`  | (none)    |
+| `DB_SSLKEY`          | `--db.sslkey`   | (none)    |
+| `DB_SSLROOTCERT`     | `--db.sslrootcert` | (none) |
+
+Explicit CLI flags always override environment variables. Using environment variables is preferred in container environments — it keeps secrets out of process arguments and `docker inspect` output.
+
+---
+
 ## Why This Patcher?
 
 The current tool we're using ("Migrate") has inadequate design features, IMHO:

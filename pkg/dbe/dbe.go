@@ -18,6 +18,7 @@ package dbe
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 
@@ -53,18 +54,25 @@ func NewEngineArgs(flags *flag.FlagSet) *EngineArgs {
 	return ea
 }
 
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
 func (ea *EngineArgs) AddFlags(flags *flag.FlagSet) {
 	flags.BoolVarP(&ea.Verbose, "verbose", "v", false, "be verbose")
 	flags.IntVarP(&ea.Retries, "retries", "r", 10, "Number of retries when trying to connect")
-	flags.StringVarP(&ea.Host, "db.host", "", "", "hostname of db server")
+	flags.StringVarP(&ea.Host, "db.host", "", envOr("DB_HOST", ""), "hostname of db server (env: DB_HOST)")
 	flags.IntVarP(&ea.Port, "db.port", "", 5432, "Port to connect to")
-	flags.StringVarP(&ea.Username, "db.username", "", "", "Username to use for db")
-	flags.StringVarP(&ea.Password, "db.password", "", "", "Password to use for db")
-	flags.StringVarP(&ea.Name, "db.name", "", "", "database name")
-	flags.StringVarP(&ea.SSLMode, "db.sslmode", "", "require", "ssl mode to use. Options are: disable, allow, prefer, require, verify-ca and verify-full. See https://www.postgresql.org/docs/current/libpq-ssl.html for details")
-	flags.StringVarP(&ea.SSLCert, "db.sslcert", "", "", "path to cert")
-	flags.StringVarP(&ea.SSLKey, "db.sslkey", "", "", "path to key")
-	flags.StringVarP(&ea.SSLRootCert, "db.sslrootcert", "", "", "path to verification root cert")
+	flags.StringVarP(&ea.Username, "db.username", "", envOr("DB_USER", ""), "Username to use for db (env: DB_USER)")
+	flags.StringVarP(&ea.Password, "db.password", "", envOr("DB_PASSWORD", ""), "Password to use for db (env: DB_PASSWORD)")
+	flags.StringVarP(&ea.Name, "db.name", "", envOr("DB_NAME", ""), "database name (env: DB_NAME)")
+	flags.StringVarP(&ea.SSLMode, "db.sslmode", "", envOr("DB_SSLMODE", "require"), "ssl mode to use. Options are: disable, allow, prefer, require, verify-ca and verify-full. See https://www.postgresql.org/docs/current/libpq-ssl.html for details (env: DB_SSLMODE)")
+	flags.StringVarP(&ea.SSLCert, "db.sslcert", "", envOr("DB_SSLCERT", ""), "path to cert (env: DB_SSLCERT)")
+	flags.StringVarP(&ea.SSLKey, "db.sslkey", "", envOr("DB_SSLKEY", ""), "path to key (env: DB_SSLKEY)")
+	flags.StringVarP(&ea.SSLRootCert, "db.sslrootcert", "", envOr("DB_SSLROOTCERT", ""), "path to verification root cert (env: DB_SSLROOTCERT)")
 }
 
 func (ea *EngineArgs) ToConnStr(protectPassword bool) string {
