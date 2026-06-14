@@ -5,7 +5,7 @@
 
 SRC = $(shell find . -name "*.go")
 PROG = dbp
-GIT_VERSION = $(shell git describe --long | sed 's/-g[0-9a-f]\{7,\}$$//')
+GIT_VERSION = $(shell git describe --tags --long | sed -E 's/-0-g[0-9a-f]+$$//' | sed -E 's/-g[0-9a-f]+$$//')
 
 build/amd64/$(PROG): $(SRC)
 	@echo "Building version $(GIT_VERSION) for amd64"
