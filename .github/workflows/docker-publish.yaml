@@ -49,8 +49,8 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v3
       with:
-        context: .  # Ensure the context is set to the project root
-        file: ./Dockerfile  # Explicitly specify the Dockerfile location
+        context: ./build
+        file: ./build/Dockerfile
         push: true
         no-cache: true  # Disable build cache
         platforms: linux/amd64,linux/arm64  # Specify target platforms
