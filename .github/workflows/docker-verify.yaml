@@ -1,8 +1,5 @@
 name: Verify Docker image
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   workflow_run:
     workflows: ["Build and Push Docker image"]
@@ -22,16 +19,16 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set image ref
       run: echo "IMAGE=livewireholdings/dbp:${{ github.event.inputs.tag || 'latest' }}" >> $GITHUB_ENV
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Check manifest — both platforms present
       run: |
