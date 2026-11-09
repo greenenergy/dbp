@@ -119,7 +119,6 @@ func parseHeader(newp *patch.Patch, data []byte) {
 			newp.Description = val
 		case "options":
 			newp.Options = splitList(val)
-			fmt.Println("options detected:", newp.Options)
 		}
 	}
 }
@@ -244,29 +243,26 @@ func (p *Patcher) Resolve() error {
 
 func (p *Patcher) shouldIgnore(thePath string) bool {
 	if p.ignore == "" {
-		fmt.Println("nothing to ignore")
 		return false
 	}
 
 	parts := strings.Split(p.ignore, ",")
 	for _, part := range parts {
-		fmt.Printf("checking ignore: %q, folder: %q\n", part, p.folder)
-
 		fullPath := filepath.Join(p.folder, part)
 		if filepath.Clean(thePath) == fullPath {
-			fmt.Println("SHOULD IGNORE")
 			return true
 		}
 	}
 
-	fmt.Println("SHOULD NOT IGNORE")
 	return false
 }
 
 func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
 
 	if p.shouldIgnore(thePath) {
-		fmt.Println("***** IGNORING *****")
+		if p.verbose {
+			fmt.Println("ignoring:", thePath)
+		}
 		if d != nil && d.IsDir() {
 			return filepath.SkipDir
 		}

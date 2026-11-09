@@ -34,14 +34,14 @@ Version is injected at build time via `-X main.Version=$(GIT_VERSION)`. The vers
 - **`cmd/`** — Cobra subcommands: `apply`, `validate`, `new`, `version`, `root`
 - **`pkg/patch/`** — `Patch` struct (id, prereqs, options, body, weight) and `ByWeight` sort implementation
 - **`pkg/patcher/`** — core logic: `Scan` walks directories, `Resolve` builds the prereq graph and detects loops via recursive `bumpWeight`, `Process` applies patches in order
-- **`pkg/dbe/`** — `DBEngine` interface + implementations: `pg_dbe.go`, `mysql_dbe.go`, `sqlite_dbe.go`, `mock_dbe.go`; `EngineArgs` reads connection params from CLI flags or environment variables
+- **`pkg/dbe/`** — `DBEngine` interface + implementations: `pg_dbe.go`, `mock_dbe.go`; `EngineArgs` reads connection params from CLI flags or environment variables
 - **`pkg/set/`** — simple string set used to track installed patch IDs
 
 ### How patching works
 
 1. `Scan` walks the folder for `*.sql` files, parsing comment headers (`-- id:`, `-- prereqs:`, `-- options:`) via regex
-2. `Resolve` builds the dependency graph: `bumpWeight` recursively increments weights on all prerequisites, detecting cycles with a `detectionMap`; patches are sorted descending by weight (higher weight → applied later)
-3. `Process` applies uninstalled patches in order; the init patch (`init_patch.sql`) is applied first when `dbp_patch_table` doesn't yet exist
+2. `Resolve` builds the dependency graph: `bumpWeight` recursively increments weights on all prerequisites, detecting cycles with a `detectionMap`; patches are sorted descending by weight (higher weight → applied earlier, so prerequisites come first)
+3. `Process` applies uninstalled patches in order; the init patch (`init_patch.sql`) is applied first when no patches have been recorded yet
 4. Each patch applies inside a transaction that also inserts the patch ID into `dbp_patch_table` — both succeed or neither does
 
 ### Patch file format
@@ -58,8 +58,8 @@ Version is injected at build time via `-X main.Version=$(GIT_VERSION)`. The vers
 - Header keys are only read from the comments before the first line of SQL, and the first occurrence of a key wins
 - `id` is required; any string without spaces or commas (UUID recommended; `dbp new` generates one)
 - `prereqs` is a comma-separated list of IDs that must be applied first
-- `options: chop` splits the file into statements before executing — useful for multi-statement files where you want per-statement error messages. Postgres only; a `;` inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a `;`
-- One file named exactly `init_patch.sql` must exist in the tree; it bootstraps `dbp_patch_table`
+- `options: chop` splits the file into statements before executing — useful for multi-statement files where you want per-statement error messages. A `;` inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a `;`
+- One file named exactly `init_patch.sql` must exist in the tree; it's the first patch applied to a new database (`dbp_patch_table` itself is created by the engine)
 
 ### DBEngine interface
 
@@ -70,7 +70,7 @@ type DBEngine interface {
 }
 ```
 
-New database engines implement this interface. `MockDBE` is used in tests and by the `validate` command (dry-run, no real DB needed).
+Postgres is the only supported database, because dbp relies on transactional DDL to roll back a failed patch. `MockDBE` is used in tests and by the `validate` command (dry-run, no real DB needed).
 
 ### Environment variables for connection params
 
@@ -87,9 +87,9 @@ CLI flags override env vars. Default SSL mode is `require`.
 
 ### Test data
 
-`testdata/` contains patch hierarchies demonstrating patcher behavior:
-- `testdata/bad/{dupe_id,long_loop,short_loop,shortest_loop,missing_id_1,missing_id_2}` — error cases
-- `testdata/good/patchset_1` — a valid patch set
-- `testdata/env/{pg,mysql,sqlite}` — docker-compose environments for manual integration testing
+`pkg/patcher/testdata/` contains patch hierarchies demonstrating patcher behavior, and `testdata/env/pg` is for manual testing:
+- `pkg/patcher/testdata/bad/{dupe_id,long_loop,short_loop,shortest_loop,missing_id_1,missing_id_2}` — error cases
+- `pkg/patcher/testdata/good/patchset_1` — a valid patch set
+- `testdata/env/pg` — docker-compose environment for manual integration testing
 
-The main `TestPatcher` test is currently skipped (`t.Skip("temp")`). `TestIgnore` runs and exercises the folder-ignore path with `MockDBE`.
+`TestPatcher` runs these cases against `MockDBE`. `TestIgnore` and `TestParseHeader` use patches written to a temp folder.

@@ -29,7 +29,6 @@ import (
 )
 
 func TestPatcher(t *testing.T) {
-	t.Skip("temp")
 	engine := dbe.NewMockDBE()
 
 	p, err := NewPatcher(false, true, engine, "", "")
@@ -76,12 +75,10 @@ func TestPatcher(t *testing.T) {
 	for _, c := range errorCases {
 		p.Reset()
 		err = p.Scan(c.folder)
-		if err != nil {
-			if c.err == nil {
-				t.Errorf("error scanning: %v", err)
-			} else if err.Error() != c.err.Error() {
-				t.Errorf("error scanning. Expected:\n%v\ngot:\n%v", c.err, err)
-			}
+		if err == nil {
+			t.Errorf("scanning %s: expected an error", c.folder)
+		} else if err.Error() != c.err.Error() {
+			t.Errorf("error scanning. Expected:\n%v\ngot:\n%v", c.err, err)
 		}
 	}
 

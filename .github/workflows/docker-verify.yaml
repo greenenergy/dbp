@@ -47,11 +47,11 @@ jobs:
     - name: Functional test — amd64
       run: |
         docker run --rm --platform linux/amd64 \
-          -v ${{ github.workspace }}/testdata/env/sqlite/patches:/patches \
+          -v ${{ github.workspace }}/pkg/patcher/testdata/good/patchset_1:/patches \
           ${{ env.IMAGE }} validate -f /patches
 
     - name: Functional test — arm64
       run: |
         docker run --rm --platform linux/arm64 \
-          -v ${{ github.workspace }}/testdata/env/sqlite/patches:/patches \
+          -v ${{ github.workspace }}/pkg/patcher/testdata/good/patchset_1:/patches \
           ${{ env.IMAGE }} validate -f /patches

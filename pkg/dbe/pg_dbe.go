@@ -43,33 +43,10 @@ type PGDBE struct {
 	retries int
 }
 
-type PGArgs struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Name     string `json:"dbname"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 
 	connStr := args.ToConnStr(false)
 	safeConnStr := args.ToConnStr(true)
-
-	/*
-		connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
-			args.Host, args.Port, args.User, args.Name, args.SSLMode, args.Password)
-
-		safeConnStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=<redacted>",
-			args.Host, args.Port, args.User, args.Name, args.SSLMode)
-	*/
-
-	/*
-		if args.SSLCert != "" {
-			connStr +=
-		}
-	*/
 
 	if args.Verbose {
 		fmt.Println("connstr:", safeConnStr)
@@ -191,13 +168,12 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	}
 
 	if ptch.HasOption("chop") {
-		fmt.Println("chop option detected")
 		for _, stmtText := range splitStatements(ptch.Body) {
 			fmt.Println("Executing:", string(stmtText))
 			_, err = tx.Exec(string(stmtText))
 			if err != nil {
-				if re := tx.Rollback(); re != nil {
-					fmt.Println("*** Error rolling back:", err)
+				if rerr := tx.Rollback(); rerr != nil {
+					fmt.Println("*** Error rolling back:", rerr)
 				}
 				switch e := err.(type) {
 				case *pq.Error:
@@ -212,11 +188,10 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 			}
 		}
 	} else {
-		fmt.Println("chop option NOT detected")
 		_, err = tx.Exec(string(ptch.Body))
 		if err != nil {
 			if rerr := tx.Rollback(); rerr != nil {
-				fmt.Println("*** Error rolling back:", err)
+				fmt.Println("*** Error rolling back:", rerr)
 			}
 			switch e := err.(type) {
 			case *pq.Error:
