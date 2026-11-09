@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"regexp"
 	"strings"
 	"time"
 
@@ -174,16 +173,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 
 	if ptch.HasOption("chop") {
 		fmt.Println("chop option detected")
-		// Chop the file according to semicolons
-		re := regexp.MustCompile(`(?s)(.*?);`)
-		matches := re.FindAllStringSubmatchIndex(string(ptch.Body), -1)
-
-		for _, match := range matches {
-			// match[0] is the start of the full match, match[1] is the end.
-			// match[2] and match[3] are the subgroup (.*?).
-			start := match[2]
-			end := match[1]
-			stmtText := ptch.Body[start:end] // Includes the semicolon.
+		for _, stmtText := range splitStatements(ptch.Body) {
 			fmt.Println("Executing:", string(stmtText))
 			_, err = tx.Query(string(stmtText))
 			if err != nil {
@@ -235,7 +225,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 
 	err = tx.Commit()
 	if err != nil {
-		fmt.Println("*** Problem committing:", err.Error())
+		return fmt.Errorf("problem committing patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
 	}
 	return nil
 }

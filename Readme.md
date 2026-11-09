@@ -20,7 +20,7 @@ At the top of each patch file, you need to add two comment lines:
 
 The id can be any string without spaces.
 The prereqs line is a comma separated list of patches that need to be applied before this one. The prereqs refer to the id field of the other patches, so it makes sense to use filenames for the ids. I usually use the filename without the .sql extension, ie:
-The options line is for adding options. Current option is "chop", which chops the sql file into individual statements via ';' for tracking down errors within the file when applying.
+The options line is for adding options. Current option is "chop", which chops the sql file into individual statements for tracking down errors within the file when applying (Postgres only). A ';' inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a ';'.
 
 File1, bugfix_1234.sql:
         
@@ -126,6 +126,107 @@ Connection parameters can be set via environment variables instead of CLI flags:
 | `DB_SSLROOTCERT`     | `--db.sslrootcert` | (none) |
 
 Explicit CLI flags always override environment variables. Using environment variables is preferred in container environments — it keeps secrets out of process arguments and `docker inspect` output.
+
+---
+
+## Kubernetes / Helm Usage
+
+The same purpose-built dbp+patches container from the Docker section above works as a Helm hook Job. Wire it up as a `pre-install,pre-upgrade` hook with a low (very negative) `hook-weight` so it's the *first* thing Helm runs — before any other resource in the chart is created. If the job fails, Helm aborts the release right there: no Deployment, no Service, nothing else gets created against a database that isn't in the state your app expects.
+
+```yaml
+# templates/job-dbp-migrate.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-dbp-migrate
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: dbp-migrate
+          image: "{{ .Values.dbpImage.registry }}/{{ .Values.dbpImage.repository }}:{{ .Values.dbpImage.tag }}"
+          env:
+            - name: DB_HOST
+              value: {{ .Values.db.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.db.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.db.name | quote }}
+            - name: DB_USER
+              value: {{ .Values.db.migrateUser | quote }}
+            - name: DB_SSLMODE
+              value: {{ .Values.db.sslmode | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.secretName }}
+                  key: {{ .Values.db.secretKey }}
+```
+
+A few things that matter here:
+
+- **`helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded`** cleans up the completed Job before the next `helm upgrade` creates a new one — Jobs are immutable, so without this a second install/upgrade fails trying to recreate one with the same name.
+- **`backoffLimit`** should stay low (2-3). If `dbp` fails, that's a real problem to surface immediately, not something to silently retry many times.
+- **The database and role must already exist** before the first install — see "Least-Privilege Setup" below. dbp does not create databases or roles itself; it only applies patches to whatever it's pointed at, by design.
+- **`DB_USER` here should be the DDL-privileged role**, not whatever role your application itself connects as — see below for why that split matters and how to set it up.
+
+---
+
+## Least-Privilege Setup (separate DDL and app roles)
+
+dbp deliberately does not create databases or roles for you — you create the database and grant access yourself, so dbp can never accidentally touch a system it wasn't meant to. That also means it's up to you to decide how much power the connecting role has.
+
+The recommended pattern is **two roles**: one with DDL rights that only `dbp` ever connects as, and one with plain CRUD rights (`SELECT`/`INSERT`/`UPDATE`/`DELETE`, no schema changes) that your application connects as. That way, even if your application has a bug or gets compromised, it can't alter or drop anything.
+
+The gotcha people hit here: `GRANT ... ON ALL TABLES IN SCHEMA public` only affects tables that *already exist* at the moment you run it. Every table a *future* patch creates is left ungranted, and you end up hand-granting again after every migration. The fix is `ALTER DEFAULT PRIVILEGES`, which tells Postgres "whenever this specific role creates a table here, automatically grant these rights to that other role" — so every future patch that creates a table needs no follow-up.
+
+Example, using a project called `timetracker` with a migration role and an app role:
+
+```sql
+-- Run once, as the postgres superuser
+
+-- 1. Create the two roles
+CREATE ROLE timetracker_migrate LOGIN PASSWORD '<ddl-password>';
+CREATE ROLE timetracker_app LOGIN PASSWORD '<app-password>';
+
+-- 2. Create the database, owned by the DDL role
+CREATE DATABASE timetracker OWNER timetracker_migrate;
+
+-- 3. Switch into it for the rest
+\c timetracker
+
+-- 4. Let the app role connect and see the schema
+GRANT CONNECT ON DATABASE timetracker TO timetracker_app;
+GRANT USAGE ON SCHEMA public TO timetracker_app;
+
+-- 5. Grant CRUD on whatever exists right now (harmless on a fresh
+--    empty database; re-run this once if you ever bulk-load
+--    something outside of dbp)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO timetracker_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO timetracker_app;
+
+-- 6. The actual fix: auto-grant CRUD on every table/sequence
+--    timetracker_migrate creates from now on, i.e. every dbp patch
+ALTER DEFAULT PRIVILEGES FOR ROLE timetracker_migrate IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO timetracker_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE timetracker_migrate IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO timetracker_app;
+```
+
+Then point `dbp` at `timetracker_migrate` (`DB_USER=timetracker_migrate`) and your application at `timetracker_app`.
+
+Two things worth knowing:
+- **Sequences matter.** Any `SERIAL`/`BIGSERIAL`/identity column backs onto a sequence, and `INSERT` needs `USAGE` on it to call `nextval()`. Easy to forget, and the resulting error ("permission denied for sequence") doesn't make the cause obvious.
+- **The default-privilege grant is tied to the creator role.** It only fires for objects `timetracker_migrate` itself creates. If you ever run ad-hoc DDL as the superuser instead of through dbp, those objects won't get the automatic grant — so `dbp` should always be the one applying schema changes, consistently as the same role.
+
+This also covers views, not just tables — Postgres's `ON TABLES` default-privilege rule applies to views as well, since they live in the same catalog.
 
 ---
 

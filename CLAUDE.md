@@ -57,7 +57,7 @@ Version is injected at build time via `-X main.Version=$(GIT_VERSION)`. The vers
 
 - `id` is required; any string without spaces or commas (UUID recommended; `dbp new` generates one)
 - `prereqs` is a comma-separated list of IDs that must be applied first
-- `options: chop` splits the file on `;` before executing — useful for multi-statement files where you want per-statement error messages
+- `options: chop` splits the file into statements before executing — useful for multi-statement files where you want per-statement error messages. Postgres only; a `;` inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a `;`
 - One file named exactly `init_patch.sql` must exist in the tree; it bootstraps `dbp_patch_table`
 
 ### DBEngine interface
