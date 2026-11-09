@@ -22,7 +22,7 @@ install:
 	--db.name="patchtest" \
 	--db.username="postgres" \
 	--db.password="postgres" \
-	--db.tls=false \
+	--db.sslmode=disable \
 	-f patches -v \
 	-r 100
 
@@ -34,7 +34,7 @@ dry:
 	--db.name="patchtest" \
 	--db.username="postgres" \
 	--db.password="postgres" \
-	--db.tls=false \
+	--db.sslmode=disable \
 	-f patches -v \
 	-r 100 --dry
 
