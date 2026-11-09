@@ -39,7 +39,6 @@ const (
 type PGDBE struct {
 	conn    *sqlx.DB
 	verbose bool
-	debug   bool
 	retries int
 }
 
@@ -68,7 +67,6 @@ func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 	pgdbe := PGDBE{
 		conn:    conn,
 		verbose: args.Verbose,
-		debug:   args.Debug,
 		retries: args.Retries,
 	}
 
@@ -81,18 +79,12 @@ func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 }
 
 func (p *PGDBE) checkInstall() error {
-	p.DPrint("checkInstall()...")
-
 	for attempt := 1; ; attempt++ {
-		p.DPrint("querying dbp_patch_table...")
-
 		_, err := p.conn.Exec("select count(*) from dbp_patch_table")
 		switch {
 		case err == nil:
 			return nil
 		case isUndefinedTable(err):
-			p.DPrint("creating dbp_patch_table...")
-
 			_, err = p.conn.Exec(`
 create table dbp_patch_table (
 	id text primary key,
@@ -155,12 +147,6 @@ func (p *PGDBE) GetInstalledIDs() (*set.Set, error) {
 	return &output, nil
 }
 
-func (p *PGDBE) DPrint(msg string) {
-	if p.debug {
-		fmt.Println(msg)
-	}
-}
-
 func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	tx, err := p.conn.Begin()
 	if err != nil {
@@ -177,10 +163,6 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 				}
 				switch e := err.(type) {
 				case *pq.Error:
-					if p.debug {
-						fmt.Println("Problem patch:", string(ptch.Body))
-						fmt.Println("*** Problem query:", string(stmtText))
-					}
 					return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 				default:
 					return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
@@ -195,9 +177,6 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 			}
 			switch e := err.(type) {
 			case *pq.Error:
-				if p.debug {
-					fmt.Println("Problem patch:", string(ptch.Body))
-				}
 				return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 			default:
 				return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())

@@ -23,7 +23,7 @@ install:
 	--db.username="postgres" \
 	--db.password="postgres" \
 	--db.tls=false \
-	-f patches -v -d \
+	-f patches -v \
 	-r 100
 
 .PHONY: dry
@@ -35,7 +35,7 @@ dry:
 	--db.username="postgres" \
 	--db.password="postgres" \
 	--db.tls=false \
-	-f patches -v -d \
+	-f patches -v \
 	-r 100 --dry
 
 

@@ -43,7 +43,6 @@ type EngineArgs struct {
 	SSLCert     string `json:"sslcert" connarg:"sslcert"`
 	SSLKey      string `json:"sslkey" connarg:"sslkey"`
 	SSLRootCert string `json:"sslrootcert" connarg:"sslrootcert"`
-	Debug       bool   `json:"debug"`
 	Verbose     bool   `json:"verbose"`
 	Retries     int    `json:"retries"`
 }

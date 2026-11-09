@@ -50,9 +50,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringP("engine", "e", "", "database engine (postgres,mock)")
-	rootCmd.PersistentFlags().StringP("dbcreds", "z", "", "Name of db credentials file")
 	rootCmd.PersistentFlags().BoolP("dry", "", false, "dry run")
-	rootCmd.PersistentFlags().BoolP("debug", "d", false, "enable debug log")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "enable verbose mode")
 	rootCmd.PersistentFlags().StringP("ignore", "i", "", "comma separated list of folders to ignore (relative to patch root)")
 
