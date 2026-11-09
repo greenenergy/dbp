@@ -75,6 +75,15 @@ func (ea *EngineArgs) AddFlags(flags *flag.FlagSet) {
 	flags.StringVarP(&ea.SSLRootCert, "db.sslrootcert", "", envOr("DB_SSLROOTCERT", ""), "path to verification root cert (env: DB_SSLROOTCERT)")
 }
 
+// quoteConnValue quotes a key=value connection string value if it contains
+// anything that would otherwise end or change the value.
+func quoteConnValue(v string) string {
+	if !strings.ContainsAny(v, " \t\n\r\f\v'\\") {
+		return v
+	}
+	return "'" + strings.NewReplacer(`\`, `\\`, `'`, `\'`).Replace(v) + "'"
+}
+
 func (ea *EngineArgs) ToConnStr(protectPassword bool) string {
 	var resultlist []string
 	result := ""
@@ -106,7 +115,7 @@ func (ea *EngineArgs) ToConnStr(protectPassword bool) string {
 					t = "<redacted>"
 				}
 			}
-			resultlist = append(resultlist, fmt.Sprintf("%s=%s", fieldname, t))
+			resultlist = append(resultlist, fmt.Sprintf("%s=%s", fieldname, quoteConnValue(t)))
 		case int:
 			resultlist = append(resultlist, fmt.Sprintf("%s=%d", fieldname, t))
 		default:

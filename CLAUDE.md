@@ -55,6 +55,7 @@ Version is injected at build time via `-X main.Version=$(GIT_VERSION)`. The vers
 ...SQL here...
 ```
 
+- Header keys are only read from the comments before the first line of SQL, and the first occurrence of a key wins
 - `id` is required; any string without spaces or commas (UUID recommended; `dbp new` generates one)
 - `prereqs` is a comma-separated list of IDs that must be applied first
 - `options: chop` splits the file into statements before executing — useful for multi-statement files where you want per-statement error messages. Postgres only; a `;` inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a `;`
