@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package dbe
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"time"
@@ -28,6 +28,12 @@ import (
 
 	"github.com/greenenergy/dbp/pkg/patch"
 	"github.com/greenenergy/dbp/pkg/set"
+)
+
+// Postgres error codes (SQLSTATE) that checkInstall handles specially.
+const (
+	pgUndefinedTable   = "42P01"
+	pgCannotConnectNow = "57P03"
 )
 
 type PGDBE struct {
@@ -98,22 +104,19 @@ func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 }
 
 func (p *PGDBE) checkInstall() error {
-	success := false
-
 	p.DPrint("checkInstall()...")
 
-	for x := 0; x < p.retries; x++ {
+	for attempt := 1; ; attempt++ {
 		p.DPrint("querying dbp_patch_table...")
 
-		_, err := p.conn.Queryx("select count(*) from dbp_patch_table")
-		if err != nil {
-			if _, ok := err.(*net.OpError); ok {
-				fmt.Printf("this is a network error(%q), retrying %d more times\n", err.Error(), p.retries-x)
-				time.Sleep(time.Second)
-			} else {
-				p.DPrint("creating dbp_patch_table...")
+		_, err := p.conn.Exec("select count(*) from dbp_patch_table")
+		switch {
+		case err == nil:
+			return nil
+		case isUndefinedTable(err):
+			p.DPrint("creating dbp_patch_table...")
 
-				_, err = p.conn.Queryx(`
+			_, err = p.conn.Exec(`
 create table dbp_patch_table (
 	id text primary key,
 	created timestamp with time zone not null default CURRENT_TIMESTAMP,
@@ -121,22 +124,35 @@ create table dbp_patch_table (
 	description text
 )
 `)
-				if err != nil {
-					return fmt.Errorf("problem creating patch table:%q", err)
-				}
-				success = true
-				break
+			if err != nil {
+				return fmt.Errorf("problem creating patch table: %w", err)
 			}
-		} else {
-			success = true
-			break
+			return nil
+		case !isRetryableConnError(err):
+			return fmt.Errorf("problem checking for patch table: %w", err)
+		case attempt >= p.retries:
+			return fmt.Errorf("couldn't reach the database after %d attempts: %w", attempt, err)
 		}
+
+		fmt.Printf("database not ready (%q), retrying %d more times\n", err.Error(), p.retries-attempt)
+		time.Sleep(time.Second)
 	}
-	if !success {
-		fmt.Println("couldn't find the db")
-		log.Fatal("no database")
+}
+
+func isUndefinedTable(err error) bool {
+	var pqErr *pq.Error
+	return errors.As(err, &pqErr) && pqErr.Code == pgUndefinedTable
+}
+
+// isRetryableConnError reports whether err means the server can't be reached
+// yet: a network failure, or a server that is still starting up.
+func isRetryableConnError(err error) bool {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return true
 	}
-	return nil
+	var pqErr *pq.Error
+	return errors.As(err, &pqErr) && pqErr.Code == pgCannotConnectNow
 }
 
 func (p *PGDBE) GetInstalledIDs() (*set.Set, error) {
@@ -155,6 +171,9 @@ func (p *PGDBE) GetInstalledIDs() (*set.Set, error) {
 			return nil, fmt.Errorf("problem scanning id: %s", err.Error())
 		}
 		output.Add(id)
+	}
+	if err := q.Err(); err != nil {
+		return nil, fmt.Errorf("problem reading installed ids: %s", err.Error())
 	}
 	return &output, nil
 }
@@ -175,7 +194,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		fmt.Println("chop option detected")
 		for _, stmtText := range splitStatements(ptch.Body) {
 			fmt.Println("Executing:", string(stmtText))
-			_, err = tx.Query(string(stmtText))
+			_, err = tx.Exec(string(stmtText))
 			if err != nil {
 				if re := tx.Rollback(); re != nil {
 					fmt.Println("*** Error rolling back:", err)
@@ -194,7 +213,7 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 		}
 	} else {
 		fmt.Println("chop option NOT detected")
-		_, err = tx.Query(string(ptch.Body))
+		_, err = tx.Exec(string(ptch.Body))
 		if err != nil {
 			if rerr := tx.Rollback(); rerr != nil {
 				fmt.Println("*** Error rolling back:", err)
@@ -212,14 +231,11 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	}
 
 	prereqs := strings.Join(ptch.Prereqs, ",")
-	_, err = tx.Query("insert into dbp_patch_table(id, prereqs, description) values ($1, $2, $3)",
+	_, err = tx.Exec("insert into dbp_patch_table(id, prereqs, description) values ($1, $2, $3)",
 		ptch.Id, prereqs, ptch.Description)
 
 	if err != nil {
 		tx.Rollback()
-		if strings.Contains(err.Error(), "unexpected Parse response") {
-			return fmt.Errorf("problem applying patch file %q: %s -- Are you returning a resultset, or possibly have a commit statement?", ptch.Filename, err.Error())
-		}
 		return fmt.Errorf("problem applying patch file %q: %s", ptch.Filename, err.Error())
 	}
 

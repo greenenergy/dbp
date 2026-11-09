@@ -43,7 +43,6 @@ are free to use them however you wish to organize your data.`,
 			log.Fatal(err)
 		}
 		if verbose {
-			fmt.Println("    real conn str:", ea.ToConnStr(false))
 			fmt.Println("loggable conn str:", ea.ToConnStr(true))
 		}
 

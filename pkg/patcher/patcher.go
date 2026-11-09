@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package patcher
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -87,58 +86,73 @@ func (p *Patcher) Dry(dry bool) {
 // Rather than creating a reset function, just throw away
 // the patcher and create a new one
 
-func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
-	// Need to add the scanning & interpretation code here.
+var headerLine = regexp.MustCompile(`^-- ([\w\d]+): ([\w\d\s.,@-]+)$`)
 
-	file, err := os.Open(thePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+// parseHeader fills in the patch's fields from the comment lines at the top of
+// the file. It stops at the first line of SQL, and the first occurrence of a
+// key wins, so comments elsewhere can't change the header.
+func parseHeader(newp *patch.Patch, data []byte) {
+	seen := make(map[string]bool)
 
-	scanner := bufio.NewScanner(file)
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimRight(line, "\r")
+		if trimmed := strings.TrimSpace(line); trimmed != "" && !strings.HasPrefix(trimmed, "--") {
+			return
+		}
 
-	newp := patch.Patch{
-		Filename: thePath,
-	}
-
-	keyfilter := regexp.MustCompile(`^-- ([\w\d]+): ([\w\d\s.,@-]+)$`)
-	for scanner.Scan() {
-		s := scanner.Text()
-		parts := keyfilter.FindStringSubmatch(s)
+		parts := headerLine.FindStringSubmatch(line)
 		// parts[0] == whole line
 		// parts[1] == keyword
 		// parts[2] == value
-		if len(parts) < 2 {
+		if len(parts) < 2 || seen[parts[1]] {
 			continue
 		}
+		seen[parts[1]] = true
 
-		key := parts[1]
-		val := strings.Trim(parts[2], " ")
-		switch key {
+		val := strings.TrimSpace(parts[2])
+		switch parts[1] {
 		case "id":
 			newp.Id = val
 		case "prereqs":
-			newp.Prereqs = strings.Split(val, ",")
+			newp.Prereqs = splitList(val)
 		case "description":
 			newp.Description = val
 		case "options":
-			newp.Options = strings.Split(val, ",")
+			newp.Options = splitList(val)
 			fmt.Println("options detected:", newp.Options)
 		}
 	}
+}
+
+// splitList splits a comma separated header value, dropping surrounding
+// whitespace and empty items.
+func splitList(val string) []string {
+	var items []string
+	for _, item := range strings.Split(val, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
+}
+
+func (p *Patcher) NewPatch(thePath string) (*patch.Patch, error) {
+	data, err := os.ReadFile(thePath)
+	if err != nil {
+		return nil, err
+	}
+
+	newp := patch.Patch{
+		Filename: thePath,
+		Body:     data,
+	}
+	parseHeader(&newp, data)
 
 	if newp.Id == "" {
 		// The ID field is an absolute must. Without it, there is
 		// no linking.
 		return nil, fmt.Errorf("file %q missing ID field", thePath)
 	}
-
-	data, err := os.ReadFile(thePath)
-	if err != nil {
-		return nil, err
-	}
-	newp.Body = data
 
 	if other, ok := p.patches[newp.Id]; ok {
 		return nil, fmt.Errorf("duplicate id: %s, found in File %q and %q", newp.Id, other.Filename, newp.Filename)
@@ -164,7 +178,12 @@ func (p *Patcher) bumpWeight(thepatch *patch.Patch, detectionMap map[string]*pat
 
 	for _, patchkey := range thepatch.Prereqs {
 
-		err := p.bumpWeight(p.patches[patchkey], detectionMap)
+		prereq, ok := p.patches[patchkey]
+		if !ok {
+			return fmt.Errorf("bad ID reference. File %q refers to id %q which doesn't exist", thepatch.Filename, patchkey)
+		}
+
+		err := p.bumpWeight(prereq, detectionMap)
 		if err != nil {
 			return err
 		}
@@ -234,8 +253,7 @@ func (p *Patcher) shouldIgnore(thePath string) bool {
 		fmt.Printf("checking ignore: %q, folder: %q\n", part, p.folder)
 
 		fullPath := filepath.Join(p.folder, part)
-		fmt.Printf("strings.HasPrefix(%q, %q)\n", thePath, fullPath)
-		if strings.HasSuffix(thePath, fullPath) {
+		if filepath.Clean(thePath) == fullPath {
 			fmt.Println("SHOULD IGNORE")
 			return true
 		}
@@ -249,6 +267,9 @@ func (p *Patcher) walkDirFunc(thePath string, d fs.DirEntry, err error) error {
 
 	if p.shouldIgnore(thePath) {
 		fmt.Println("***** IGNORING *****")
+		if d != nil && d.IsDir() {
+			return filepath.SkipDir
+		}
 		return nil
 	}
 
