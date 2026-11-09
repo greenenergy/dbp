@@ -39,37 +39,13 @@ const (
 type PGDBE struct {
 	conn    *sqlx.DB
 	verbose bool
-	debug   bool
 	retries int
 }
 
-type PGArgs struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Name     string `json:"dbname"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// func NewPGDBE(host string, port int, user, password, dbname string, sslmode bool, verbose, debug bool, retries int) (DBEngine, error) {
 func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 
 	connStr := args.ToConnStr(false)
 	safeConnStr := args.ToConnStr(true)
-
-	/*
-		connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s",
-			args.Host, args.Port, args.User, args.Name, args.SSLMode, args.Password)
-
-		safeConnStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=<redacted>",
-			args.Host, args.Port, args.User, args.Name, args.SSLMode)
-	*/
-
-	/*
-		if args.SSLCert != "" {
-			connStr +=
-		}
-	*/
 
 	if args.Verbose {
 		fmt.Println("connstr:", safeConnStr)
@@ -91,7 +67,6 @@ func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 	pgdbe := PGDBE{
 		conn:    conn,
 		verbose: args.Verbose,
-		debug:   args.Debug,
 		retries: args.Retries,
 	}
 
@@ -104,18 +79,12 @@ func NewPGDBE(args *EngineArgs) (DBEngine, error) {
 }
 
 func (p *PGDBE) checkInstall() error {
-	p.DPrint("checkInstall()...")
-
 	for attempt := 1; ; attempt++ {
-		p.DPrint("querying dbp_patch_table...")
-
 		_, err := p.conn.Exec("select count(*) from dbp_patch_table")
 		switch {
 		case err == nil:
 			return nil
 		case isUndefinedTable(err):
-			p.DPrint("creating dbp_patch_table...")
-
 			_, err = p.conn.Exec(`
 create table dbp_patch_table (
 	id text primary key,
@@ -178,12 +147,6 @@ func (p *PGDBE) GetInstalledIDs() (*set.Set, error) {
 	return &output, nil
 }
 
-func (p *PGDBE) DPrint(msg string) {
-	if p.debug {
-		fmt.Println(msg)
-	}
-}
-
 func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	tx, err := p.conn.Begin()
 	if err != nil {
@@ -191,20 +154,15 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 	}
 
 	if ptch.HasOption("chop") {
-		fmt.Println("chop option detected")
 		for _, stmtText := range splitStatements(ptch.Body) {
 			fmt.Println("Executing:", string(stmtText))
 			_, err = tx.Exec(string(stmtText))
 			if err != nil {
-				if re := tx.Rollback(); re != nil {
-					fmt.Println("*** Error rolling back:", err)
+				if rerr := tx.Rollback(); rerr != nil {
+					fmt.Println("*** Error rolling back:", rerr)
 				}
 				switch e := err.(type) {
 				case *pq.Error:
-					if p.debug {
-						fmt.Println("Problem patch:", string(ptch.Body))
-						fmt.Println("*** Problem query:", string(stmtText))
-					}
 					return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 				default:
 					return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())
@@ -212,17 +170,13 @@ func (p *PGDBE) Patch(ptch *patch.Patch) error {
 			}
 		}
 	} else {
-		fmt.Println("chop option NOT detected")
 		_, err = tx.Exec(string(ptch.Body))
 		if err != nil {
 			if rerr := tx.Rollback(); rerr != nil {
-				fmt.Println("*** Error rolling back:", err)
+				fmt.Println("*** Error rolling back:", rerr)
 			}
 			switch e := err.(type) {
 			case *pq.Error:
-				if p.debug {
-					fmt.Println("Problem patch:", string(ptch.Body))
-				}
 				return fmt.Errorf("problem applying patch %s (%s) [detail: %q]: %s", ptch.Id, ptch.Filename, e.Detail, err.Error())
 			default:
 				return fmt.Errorf("problem applying patch %s (%s): %s", ptch.Id, ptch.Filename, err.Error())

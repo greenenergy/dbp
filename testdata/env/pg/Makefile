@@ -22,8 +22,8 @@ install:
 	--db.name="patchtest" \
 	--db.username="postgres" \
 	--db.password="postgres" \
-	--db.tls=false \
-	-f patches -v -d \
+	--db.sslmode=disable \
+	-f patches -v \
 	-r 100
 
 .PHONY: dry
@@ -34,8 +34,8 @@ dry:
 	--db.name="patchtest" \
 	--db.username="postgres" \
 	--db.password="postgres" \
-	--db.tls=false \
-	-f patches -v -d \
+	--db.sslmode=disable \
+	-f patches -v \
 	-r 100 --dry
 
 

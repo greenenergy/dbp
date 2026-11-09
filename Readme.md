@@ -20,7 +20,7 @@ At the top of each patch file, you need to add two comment lines:
 
 The id can be any string without spaces.
 The prereqs line is a comma separated list of patches that need to be applied before this one. The prereqs refer to the id field of the other patches, so it makes sense to use filenames for the ids. I usually use the filename without the .sql extension, ie:
-The options line is for adding options. Current option is "chop", which chops the sql file into individual statements for tracking down errors within the file when applying (Postgres only). A ';' inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a ';'.
+The options line is for adding options. Current option is "chop", which chops the sql file into individual statements for tracking down errors within the file when applying. A ';' inside a comment, quoted string, quoted identifier or dollar-quoted string doesn't split, and the last statement doesn't need a ';'.
 
 File1, bugfix_1234.sql:
         

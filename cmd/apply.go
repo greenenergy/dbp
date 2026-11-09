@@ -60,24 +60,12 @@ are free to use them however you wish to organize your data.`,
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("DRY RUN:", dry)
 
 		if !dry {
 			engineName := cmd.Flags().Lookup("engine").Value.String()
-			fmt.Println("ENGINE NAME:", engineName)
 			switch engineName {
-			case "mysql":
-				engine, err = dbe.NewMySQLDBE(ea)
-				if err != nil {
-					log.Fatal(err)
-				}
 			case "postgres":
 				engine, err = dbe.NewPGDBE(ea)
-				if err != nil {
-					log.Fatal(err)
-				}
-			case "sqlite":
-				engine, err = dbe.NewSQLiteDBE(ea)
 				if err != nil {
 					log.Fatal(err)
 				}

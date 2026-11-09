@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package patch
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -32,15 +31,12 @@ type Patch struct {
 }
 
 func (p *Patch) HasOption(o string) bool {
-	fmt.Println("Checking for option:", o)
 	for _, option := range p.Options {
 		// Case insensitive compare
 		if strings.EqualFold(option, o) {
-			fmt.Println("Found it!")
 			return true
 		}
 	}
-	fmt.Println("Didn't find it")
 	return false
 }
 
