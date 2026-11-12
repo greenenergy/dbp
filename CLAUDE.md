@@ -24,6 +24,20 @@ git tag -a vX.Y.Z
 
 Version is injected at build time via `-X main.Version=$(GIT_VERSION)`. The version string strips `-0-ghash` on exact tags and keeps `-ghash` suffix otherwise (see `Makefile` sed expressions).
 
+## Releases
+
+Current release: **v2.0.0** (2026-11-09). It is breaking: the MySQL and SQLite engines and the `--debug` / `--dbcreds` flags were removed (PR #7). It also includes the code-review fixes (PR #6). Downstream apps (webapp-starter and the apps built from it) use `livewireholdings/dbp:latest` in their `Dockerfile.dbp`. None of them used the removed options.
+
+- Work on a branch → PR → merge (merge commit, not squash). There is no CI on PRs, so run `go vet ./... && go test ./...` before merging. For engine/patcher changes, also apply a real patch set to a throwaway Postgres twice (the second run should print "No work to do").
+- `.github/workflows/docker-publish.yaml` runs on **every push to `main`** and on `v*` tags. It runs the tests, then builds amd64+arm64 and pushes `livewireholdings/dbp:latest` plus `:$(make versiontag)`. `docker-verify.yaml` then checks that both platforms are in the manifest.
+- To release: annotated tag on `main` (`git tag -a vX.Y.Z -m "…"`), then `git push origin vX.Y.Z`. Semver: removing an engine, flag or behaviour is a major bump.
+- Every merge to `main` also moves `:latest`. If several runs overlap, check that `:latest` and the new tag have the same digest afterwards (`docker buildx imagetools inspect livewireholdings/dbp:<tag>`), and re-run the tag's workflow if they don't.
+
+## Known quirks
+
+- `apply --dry` doesn't consult the database, so on an already-patched database it still lists every patch as "applying".
+- `testdata/certs` (and `testdata/env/pg/certs`, which links to it) is gitignored and exists only locally, so `testdata/env/pg` `make start` fails in a fresh clone.
+
 ## Architecture
 
 `dbp` is a forward-only SQL database patcher CLI. It walks a directory tree of `.sql` patch files, resolves their prerequisite graph, and applies unapplied patches in dependency order — each inside its own transaction alongside an insert into `dbp_patch_table`.
